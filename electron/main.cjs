@@ -18,6 +18,9 @@ app.setPath('crashDumps', path.join(dataDirectory, 'crash-dumps'));
 app.setAppLogsPath(path.join(dataDirectory, 'logs'));
 
 const store = new NoteStore(dataDirectory);
+const testPort=process.env.TINTA_TEST_MODE==='1'&&process.env.TINTA_DATA_DIR&&/^\d{4,5}$/.test(process.env.TINTA_OLLAMA_TEST_PORT||'')?Number(process.env.TINTA_OLLAMA_TEST_PORT):11434;
+const ollama = new (require('./ollama.cjs').OllamaService)(dataDirectory,{base:'http://127.0.0.1:'+testPort});
+const aiReady = ollama.load();
 const entryPath = path.resolve(__dirname, '../dist/index.html');
 const entryUrl = pathToFileURL(entryPath).href;
 const testMode = process.env.TINTA_TEST_MODE === '1';
@@ -103,6 +106,24 @@ async function askCloseWithoutFlush() {
 }
 
 function registerIpc() {
+  handle('tinta:ai-config', async()=>{await aiReady;return ollama.config;});
+  handle('tinta:ai-models', ()=>ollama.models());
+  handle('tinta:ai-configure', async config=>{await aiReady;return ollama.configure(config);});
+  handle('tinta:ai-predict', async request=>{await aiReady;return ollama.predict(request);});
+  handle('tinta:ai-cancel', id=>ollama.cancel(id));
+  handle('tinta:export-preview', async payload=>{
+    const html=require('./preview-export.cjs').previewDocument(payload);
+    const result=await dialog.showSaveDialog(mainWindow,{title:'Exportar vista previa',defaultPath:safeFilename(payload.title,'.'+payload.format),filters:[{name:payload.format.toUpperCase(),extensions:[payload.format]}]});
+    if(result.canceled||!result.filePath)return false;
+    if(payload.format==='html'){await atomicWrite(result.filePath,html);return true;}
+    const printSession=session.fromPartition('tinta-export-'+require('node:crypto').randomUUID());
+    printSession.setPermissionRequestHandler((_wc,_perm,callback)=>callback(false));
+    printSession.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!(details.url.startsWith('data:')||(details.resourceType==='image'&&details.url.startsWith('https:')))}));
+    const printWindow=new BrowserWindow({show:false,webPreferences:{session:printSession,sandbox:true,contextIsolation:true,nodeIntegration:false,javascript:false}});
+    printWindow.webContents.setWindowOpenHandler(()=>({action:'deny'}));
+    try{await Promise.race([printWindow.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html)),new Promise((_,reject)=>{const timer=setTimeout(()=>reject(new Error('La exportación tardó demasiado; revisa las imágenes externas.')),20000);timer.unref();})]);const pdf=await printWindow.webContents.printToPDF({printBackground:true,preferCSSPageSize:true,pageSize:'A4'});await atomicWrite(result.filePath,pdf);return true;}
+    finally{printWindow.destroy();await printSession.clearStorageData();}
+  });
   handle('tinta:load', async () => { const state=await store.load(); await require('./upgrade.cjs').preserveUpgradeSnapshot(dataDirectory,state); return state; });
   handle('tinta:save', state => store.save(state));
   handle('tinta:storage-status', () => store.getStatus());
@@ -189,7 +210,7 @@ function createWindow() {
     contents.send('tinta:before-close');
     closeTimer = setTimeout(() => void askCloseWithoutFlush(), 12000);
   });
-  mainWindow.on('closed', () => { cancelClose(); mainWindow = null; });
+  mainWindow.on('closed', () => { ollama.cancel(); cancelClose(); mainWindow = null; });
   if (devUrl) void mainWindow.loadURL(devUrl.href);
   else void mainWindow.loadFile(entryPath);
 }

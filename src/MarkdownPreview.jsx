@@ -9,7 +9,7 @@ function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
 }
 
-function renderMarkdown(value, notes) {
+export function renderMarkdown(value, notes) {
   let taskIndex = 0
   const markdown = new Marked({
     gfm: true,
