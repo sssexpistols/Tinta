@@ -11,6 +11,7 @@ import { tags } from '@lezer/highlight'
 import { getCM, vim, Vim } from '@replit/codemirror-vim'
 import { makeWikiLink, normalizeTitle, resolveWikiTarget, scanWikiLinks } from './wiki'
 import './editor.css'
+import {prediction} from './prediction.js'
 
 const vimSaveHandlers = new WeakMap()
 Vim.defineEx('write', 'w', cm => vimSaveHandlers.get(cm)?.())
@@ -194,17 +195,18 @@ function completionSource(propsRef, modeRef) {
   }
 }
 
-const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange }, ref) {
+const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange, aiEnabled=false, onAiStatus }, ref) {
   const containerRef = useRef(null)
   const viewRef = useRef(null)
   const propsRef = useRef({})
-  propsRef.current = { noteId, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange }
+  propsRef.current = { noteId, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange, aiEnabled, onAiStatus }
   const activeNoteRef = useRef(noteId)
   const historiesRef = useRef(new Map())
   const suppressChange = useRef(false)
   const fontCompartment = useRef(new Compartment())
   const vimCompartment = useRef(new Compartment())
   const numbersCompartment = useRef(new Compartment())
+  const aiCompartment = useRef(new Compartment())
   const modeRef = useRef('NORMAL')
   const createStateRef = useRef(null)
 
@@ -327,6 +329,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
     createStateRef.current = (doc) => EditorState.create({
       doc,
       extensions: [
+        aiCompartment.current.of(propsRef.current.aiEnabled ? prediction(propsRef,modeRef) : []),
         vimCompartment.current.of(vimExtensions()),
         numbersCompartment.current.of(numbersExtensions()),
         history(), drawSelection(), dropCursor(), highlightSpecialChars(), rectangularSelection(),
@@ -347,7 +350,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
           { key: 'Mod-Enter', run: view => openWiki(view, view.state.selection.main.head) },
           ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab,
         ]),
-        placeholder('Empieza a escribir… / para insertar, [[ para enlazar una nota'),
+        placeholder('Empieza a escribir… Ctrl+T para plantilla, / para insertar, [[ para enlazar'),
         editorTheme,
         fontCompartment.current.of(EditorView.theme({ '&': { fontSize: `${propsRef.current.fontSize}px` } })),
         EditorView.contentAttributes.of({ 'aria-label': 'Contenido de la nota en Markdown', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off' }),
@@ -377,7 +380,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
     const view = new EditorView({ state: createStateRef.current(propsRef.current.value), parent: containerRef.current })
     viewRef.current = view
     // Keep reconfiguration functions with the instance; toggles preserve document undo.
-    view.tintaReconfigure = () => [vimCompartment.current.reconfigure(vimExtensions()), numbersCompartment.current.reconfigure(numbersExtensions())]
+    view.tintaReconfigure = () => [aiCompartment.current.reconfigure(propsRef.current.aiEnabled ? prediction(propsRef,modeRef) : []), vimCompartment.current.reconfigure(vimExtensions()), numbersCompartment.current.reconfigure(numbersExtensions())]
     activeNoteRef.current = propsRef.current.noteId
     propsRef.current.onStats?.(getStats(propsRef.current.value))
     return () => { view.destroy(); viewRef.current = null }
@@ -417,7 +420,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
   useEffect(() => {
     const view = viewRef.current
     if (view) view.dispatch({ effects: view.tintaReconfigure() })
-  }, [vimMode, relativeNumbers])
+  }, [vimMode, relativeNumbers, aiEnabled])
 
   useEffect(() => {
     // Renames, creation and deletion update link decoration without changing Markdown.

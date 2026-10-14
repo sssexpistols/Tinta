@@ -80,3 +80,12 @@
 @keyframes editor-pop-in { from { transform: translateY(-3px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .markdown-editor .cm-tooltip-autocomplete { animation: none; } .markdown-editor .cm-editor .cm-cursorLayer { animation: none !important; } .markdown-editor .cm-editor .cm-wiki-link { transition: none; } }
 :root[data-theme=light] { --syntax-heading: #a9267c; --syntax-punctuation: #286fac; --syntax-string: #3a7750; --syntax-number: #98651d; --bg-code: #f3f3f7; --editor-selection: #8e7dd52b; }
+.markdown-editor .cm-focused .cm-cursorLayer { animation: tinta-cursor-breathe 1.25s ease-in-out infinite !important; }
+.markdown-editor .cm-editor:not(.cm-focused) .cm-cursorLayer { animation: none !important; }
+.markdown-editor .ai-ghost { color:var(--muted);opacity:.65;white-space:pre-wrap;pointer-events:none;font-style:italic; }
+.markdown-body pre { transition:border-color .2s ease,background-color .2s ease; }
+.markdown-body pre:hover { border-color:color-mix(in srgb,var(--accent) 30%,var(--border)); }
+:root[data-theme=gruvbox] .markdown-body .hljs-title { color:#8ec07c; }
+:root[data-theme=gruvbox] .markdown-body .hljs-string { color:#b8bb26; }
+@keyframes tinta-cursor-breathe { 0%,20%,100% { opacity:1; } 55%,70% { opacity:.12; } }
+@media (prefers-reduced-motion:reduce) { .markdown-editor .cm-focused .cm-cursorLayer { animation:none !important;opacity:1; } .markdown-body pre { transition:none; } }

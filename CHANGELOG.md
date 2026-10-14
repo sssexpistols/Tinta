@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0
+
+- Themed keyboard-accessible notebook, status and sort menus replace native Windows selects.
+- Smooth cursor opacity animation in normal writing and Vim, respecting reduced motion.
+- Ctrl+T applies a template only to an empty note without changing its ID or overwriting content. Eight built-in templates cover studying, Cornell notes, clean code review, patterns, deployment, tasks, debugging and architecture decisions.
+- Rendered preview export to standalone HTML and PDF with independent dark/light/Gruvbox theme and optional dates/backlink metadata. Markdown and JSON export remain available.
+- Optional local Ollama prediction with explicit model selection, 950 ms typing pause, ghost text, Tab acceptance, Escape dismissal, cancellation and Vim insert-mode support. Loopback-only endpoint; cloud/remote models rejected. Preferences are stored separately from notes and backups.
+- Schema remains version 1; creates immutable notes.before-v1.2.0.json before the first write to an existing collection. Versioned release preserves previous executables.
+
 ## 1.1.0
 
 - `[[...]]` offers to create a missing note, including titles containing spaces. Completion inserts a persistent reference and keeps the source note open for writing.
