@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { Marked } from 'marked'
 import DOMPurify from 'dompurify'
 import hljs from 'highlight.js'
+import { resolveWikiTarget } from './wiki'
 import './editor.css'
 
 function escapeHTML(value) {
@@ -14,6 +15,10 @@ function renderMarkdown(value, notes) {
     gfm: true,
     breaks: true,
     renderer: {
+      html({ text }) {
+        // Only our renderers may attach interactive note/task metadata.
+        return DOMPurify.sanitize(text, { ALLOW_DATA_ATTR: false, FORBID_ATTR: ['data-note-id', 'data-task-index', 'data-wiki-create'] })
+      },
       code({ text, lang }) {
         const language = (lang || '').trim().split(/\s+/)[0]
         let content = escapeHTML(text)
@@ -40,9 +45,10 @@ function renderMarkdown(value, notes) {
       renderer(token) {
         const [target, ...aliasParts] = token.target.split('|')
         const name = target.trim()
-        const note = notes.find(item => !item.deletedAt && (item.id === name || item.title?.toLocaleLowerCase() === name.toLocaleLowerCase()))
+        const note = resolveWikiTarget(name, notes)
         const label = aliasParts.length ? aliasParts.join('|').trim() : (note?.title || name)
-        if (!note) return `<span class="wiki-link missing" title="La nota no existe">${escapeHTML(label)}</span>`
+        if (!name) return escapeHTML(token.raw)
+        if (!note) return `<a class="wiki-link missing" href="#create-note" data-wiki-create="${escapeHTML(name)}" title="Crear nota: ${escapeHTML(name)}">${escapeHTML(label)}</a>`
         return `<a class="wiki-link" href="#note=${encodeURIComponent(note.id)}" data-note-id="${escapeHTML(note.id)}" title="Abrir ${escapeHTML(note.title || 'Sin título')}">${escapeHTML(label)}</a>`
       },
     }],
@@ -51,11 +57,11 @@ function renderMarkdown(value, notes) {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ['style', 'form', 'button', 'textarea', 'select', 'option', 'iframe', 'video', 'audio', 'object', 'embed'],
     FORBID_ATTR: ['style', 'srcset', 'formaction', 'action', 'autofocus'],
-    ADD_ATTR: ['data-note-id', 'data-task-index', 'data-language', 'target'],
+    ADD_ATTR: ['data-note-id', 'data-task-index', 'data-wiki-create', 'data-language', 'target'],
   })
 }
 
-export default function MarkdownPreview({ value = '', notes = [], onNavigate, onToggleTask, scrollRatio }) {
+export default function MarkdownPreview({ value = '', notes = [], onNavigate, onCreateNote, onToggleTask, scrollRatio }) {
   const containerRef = useRef(null)
   const html = useMemo(() => renderMarkdown(value, notes), [value, notes])
 
@@ -69,7 +75,7 @@ export default function MarkdownPreview({ value = '', notes = [], onNavigate, on
     // Only Markdown-generated tasks can edit the document; arbitrary HTML controls stay inert.
     const container = containerRef.current
     container.querySelectorAll('input').forEach(input => {
-      if (!input.classList.contains('markdown-task') || input.type !== 'checkbox' || !onToggleTask) input.disabled = true
+      if (!input.classList.contains('markdown-task') || input.type !== 'checkbox' || input.dataset.taskIndex == null || !onToggleTask) input.disabled = true
     })
     container.querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async' })
     // Raw rendered Markdown inputs are not React-controlled nodes, so listen to the native event.
@@ -83,13 +89,21 @@ export default function MarkdownPreview({ value = '', notes = [], onNavigate, on
     return () => container.removeEventListener('change', change)
   }, [html, onToggleTask])
 
-  function onClick(event) {
+  async function onClick(event) {
     const anchor = event.target.closest?.('a')
     if (!anchor) return
     const id = anchor.dataset.noteId
     if (id) {
       event.preventDefault()
-      if (notes.some(note => note.id === id && !note.deletedAt)) onNavigate?.(id)
+      if (resolveWikiTarget(id, notes)) onNavigate?.(id)
+      return
+    }
+    const title = anchor.dataset.wikiCreate
+    if (title) {
+      event.preventDefault()
+      const existing = resolveWikiTarget(title, notes)
+      const created = existing || await onCreateNote?.(title)
+      if (created?.id) onNavigate?.(created.id)
       return
     }
     const href = anchor.getAttribute('href') || ''

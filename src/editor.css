@@ -1,6 +1,19 @@
 .markdown-editor { flex: 1; height: 100%; min-height: 0; min-width: 0; background: var(--bg-editor, #101112); }
 .markdown-editor .cm-editor { height: 100%; }
 .markdown-editor .cm-content { tab-size: 2; }
+.markdown-editor .cm-editor .cm-gutters { background: var(--bg-editor, #101112); color: var(--muted, #777d87); border-right: 1px solid var(--border, #303139); font-size: 11px; min-width: 39px; user-select: none; }
+.markdown-editor .cm-lineNumbers .cm-gutterElement { padding: 0 10px 0 7px; min-width: 36px; text-align: right; }
+.markdown-editor .cm-editor .cm-activeLineGutter { background: color-mix(in srgb, var(--accent, #a196ed) 7%, transparent); }
+.markdown-editor .cm-currentLineNumber { color: var(--accent, #a196ed); font-weight: 600; }
+.markdown-editor .cm-editor .cm-activeLine { background: color-mix(in srgb, var(--muted, #858894) 8%, transparent); }
+.markdown-editor .cm-editor[data-vim-mode] .cm-line { padding-left: 12px; }
+.markdown-editor .cm-editor .cm-fat-cursor { background: var(--accent, #a196ed); color: var(--bg-editor, #101112) !important; border-radius: 1px; }
+.markdown-editor .cm-editor:not(.cm-focused) .cm-fat-cursor { background: transparent; outline-color: var(--accent, #a196ed); color: transparent !important; }
+.markdown-editor .cm-editor .cm-vim-panel { padding: 5px 12px; min-height: 26px; font: 12px/1.6 'Cascadia Code', Consolas, monospace; color: var(--accent, #a196ed); }
+.markdown-editor .cm-editor .cm-vim-panel input { color: var(--text); font: inherit; caret-color: var(--accent); }
+.markdown-editor .cm-editor .cm-wiki-link { color: var(--wiki-link, #78b7ee); cursor: pointer; text-decoration: none; border-radius: 2px; transition: background-color 120ms ease, color 120ms ease; }
+.markdown-editor .cm-editor .cm-wiki-link:hover { background: color-mix(in srgb, var(--wiki-link, #78b7ee) 14%, transparent); }
+.markdown-editor .cm-editor .cm-wiki-missing { color: var(--muted, #858894); text-decoration: underline dashed; text-underline-offset: 3px; }
 .markdown-editor .cm-search { padding: 9px 35px 9px 12px; font: 12px/1.7 'Segoe UI', sans-serif; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .markdown-editor .cm-search label { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
 .markdown-editor .cm-search input[type=checkbox] { accent-color: var(--accent, #a196ed); }
@@ -65,5 +78,5 @@
 .preview-empty span { font-size: 16px; }
 .preview-empty small { font-size: 12px; opacity: .7; }
 @keyframes editor-pop-in { from { transform: translateY(-3px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .markdown-editor .cm-tooltip-autocomplete { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .markdown-editor .cm-tooltip-autocomplete { animation: none; } .markdown-editor .cm-editor .cm-cursorLayer { animation: none !important; } .markdown-editor .cm-editor .cm-wiki-link { transition: none; } }
 :root[data-theme=light] { --syntax-heading: #a9267c; --syntax-punctuation: #286fac; --syntax-string: #3a7750; --syntax-number: #98651d; --bg-code: #f3f3f7; --editor-selection: #8e7dd52b; }
