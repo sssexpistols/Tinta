@@ -103,7 +103,7 @@ async function askCloseWithoutFlush() {
 }
 
 function registerIpc() {
-  handle('tinta:load', () => store.load());
+  handle('tinta:load', async () => { const state=await store.load(); await require('./upgrade.cjs').preserveUpgradeSnapshot(dataDirectory,state); return state; });
   handle('tinta:save', state => store.save(state));
   handle('tinta:storage-status', () => store.getStatus());
   handle('tinta:window-state', windowState);

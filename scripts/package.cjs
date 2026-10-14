@@ -2,6 +2,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const packager = require('@electron/packager');
 const root = path.resolve(__dirname, '..');
+const version = require('../package.json').version;
 (async () => {
   const buildRoot = path.join(root, '.build');
   await fs.mkdir(buildRoot, { recursive: true });
@@ -12,13 +13,13 @@ const root = path.resolve(__dirname, '..');
     });
   }
   await fs.writeFile(path.join(stage, 'package.json'), JSON.stringify({
-    name: 'tinta', productName: 'Tinta', version: '1.0.0', main: 'electron/main.cjs', private: true,
+    name: 'tinta', productName: 'Tinta', version, main: 'electron/main.cjs', private: true,
   }, null, 2));
   const paths = await packager({
-    dir: stage, name: 'Tinta', appVersion: '1.0.0', platform: 'win32', arch: 'x64',
+    dir: stage, name: 'Tinta', appVersion: version, platform: 'win32', arch: 'x64',
     electronVersion: require('electron/package.json').version,
     electronZipDir: process.env.TINTA_ELECTRON_ZIP_DIR || undefined,
-    out: path.join(root, '..', 'Tinta-Windows'), overwrite: true, asar: true, prune: false,
+    out: process.env.TINTA_RELEASE_DIR || path.join(root, '..', 'Tinta-' + version + '-Windows'), overwrite: false, asar: true, prune: false,
     icon: path.join(root, 'assets', 'tinta.ico'),
     win32metadata: { CompanyName: 'Tinta', FileDescription: 'Tinta — Notas Markdown', ProductName: 'Tinta', InternalName: 'Tinta', OriginalFilename: 'Tinta.exe' },
   });

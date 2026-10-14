@@ -7,7 +7,7 @@ const appDir=root;
 const dataDir=path.join(root,'.test-results','e2e-'+Date.now());
 const results=[];let app,page;const errors=[];
 const env={...process.env,TINTA_TEST_MODE:'1',TINTA_DATA_DIR:dataDir};delete env.ELECTRON_RUN_AS_NODE;
-async function launch(){app=await electron.launch({executablePath:path.join(appDir,'node_modules/electron/dist/electron.exe'),args:[appDir,"--no-sandbox","--disable-gpu","--enable-logging=stderr"],env,timeout:30000});page=await app.firstWindow();page.on('pageerror',error=>errors.push(error.message));await page.getByLabel('Título de la nota',{exact:true}).waitFor();}
+async function launch(){app=await electron.launch({executablePath:process.env.TINTA_ELECTRON_PATH||path.join(appDir,'node_modules/electron/dist/electron.exe'),args:[appDir,"--no-sandbox","--disable-gpu","--enable-logging=stderr"],env,timeout:30000});page=await app.firstWindow();page.on('pageerror',error=>errors.push(error.message));await page.getByLabel('Título de la nota',{exact:true}).waitFor();}
 function pass(name){results.push(name);console.log('PASS '+name);}
 async function body(text){const edit=page.locator('.cm-content');await edit.click();await page.keyboard.press('Control+a');await page.keyboard.insertText(text);}
 async function close(){const closed=app.waitForEvent('close');await page.getByRole('button',{name:'Cerrar Tinta',exact:true}).click();await closed;}

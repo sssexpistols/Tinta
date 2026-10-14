@@ -60,6 +60,9 @@ function validateState(input) {
   }
   const settings = input.settings;
   if (!isObject(settings) || !['dark', 'light'].includes(settings.theme) || !['split', 'editor', 'preview'].includes(settings.view)) fail('preferencias incorrectas.');
+  if (settings.colorTheme !== undefined && !['dark','light','gruvbox'].includes(settings.colorTheme)) fail('tema de color desconocido.');
+  if (settings.vimMode !== undefined && typeof settings.vimMode !== 'boolean') fail('modo Vim incorrecto.');
+  if (settings.relativeNumbers !== undefined && typeof settings.relativeNumbers !== 'boolean') fail('numeración incorrecta.');
   for (const key of ['fontSize', 'sidebarWidth', 'listWidth', 'editorRatio']) {
     if (!Number.isFinite(settings[key])) fail(`preferencia ${key} incorrecta.`);
   }

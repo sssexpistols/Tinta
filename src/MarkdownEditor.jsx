@@ -1,14 +1,71 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { Compartment, EditorSelection, EditorState, Prec, Transaction } from '@codemirror/state'
-import { EditorView, drawSelection, dropCursor, highlightSpecialChars, keymap, placeholder, rectangularSelection } from '@codemirror/view'
+import { Decoration, EditorView, GutterMarker, ViewPlugin, drawSelection, dropCursor, gutter, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, placeholder, rectangularSelection } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
-import { acceptCompletion, autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, hasNextSnippetField, nextSnippetField, snippet, startCompletion } from '@codemirror/autocomplete'
+import { acceptCompletion, autocompletion, closeBrackets, closeBracketsKeymap, closeCompletion, completionKeymap, hasNextSnippetField, nextSnippetField, snippet, startCompletion } from '@codemirror/autocomplete'
 import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search'
 import { tags } from '@lezer/highlight'
+import { getCM, vim, Vim } from '@replit/codemirror-vim'
+import { makeWikiLink, normalizeTitle, resolveWikiTarget, scanWikiLinks } from './wiki'
 import './editor.css'
+
+const vimSaveHandlers = new WeakMap()
+Vim.defineEx('write', 'w', cm => vimSaveHandlers.get(cm)?.())
+
+class LineNumberMarker extends GutterMarker {
+  constructor(number, current) { super(); this.number = number; this.current = current }
+  eq(other) { return this.number === other.number && this.current === other.current }
+  toDOM() {
+    const span = document.createElement('span')
+    span.textContent = String(this.number)
+    if (this.current) span.className = 'cm-currentLineNumber'
+    return span
+  }
+}
+
+function numberGutter(relative) {
+  return gutter({
+    class: 'cm-lineNumbers',
+    initialSpacer: view => new LineNumberMarker(view.state.doc.lines, false),
+    updateSpacer: (spacer, update) => new LineNumberMarker(update.state.doc.lines, false),
+    lineMarker(view, line) {
+      const number = view.state.doc.lineAt(line.from).number
+      const current = view.state.doc.lineAt(view.state.selection.main.head).number
+      return new LineNumberMarker(relative && number !== current ? Math.abs(number - current) : number, number === current)
+    },
+    lineMarkerChange: update => update.selectionSet || update.docChanged,
+  })
+}
+
+function wikiDecorations(propsRef) {
+  return ViewPlugin.fromClass(class {
+    constructor(view) { this.build(view) }
+    update(update) { if (update.docChanged || this.notes !== propsRef.current.notes) this.build(update.view) }
+    build(view) {
+      this.notes = propsRef.current.notes
+      const decorations = [], atomic = []
+      for (const link of scanWikiLinks(view.state.doc.toString())) {
+        const note = resolveWikiTarget(link.target, propsRef.current.notes)
+        decorations.push(Decoration.mark({ class: `cm-wiki-link${note ? '' : ' cm-wiki-missing'}`, attributes: { 'data-wiki-target': link.target, title: note ? `Abrir ${note.title || 'Sin título'}` : `Crear «${link.target}»` } }).range(link.from, link.to))
+        // Stable IDs stay in Markdown, while the editor shows the human-readable alias.
+        const separator = link.raw.indexOf('|')
+        if (note && separator > 2 && link.target === note.id) {
+          const hidden = Decoration.replace({}).range(link.from + 2, link.from + separator + 1)
+          decorations.push(hidden)
+          atomic.push(hidden)
+        }
+      }
+      this.decorations = Decoration.set(decorations, true)
+      this.atomic = Decoration.set(atomic, true)
+    }
+  }, {
+    decorations: instance => instance.decorations,
+    provide: plugin => EditorView.atomicRanges.of(view => view.plugin(plugin)?.atomic || Decoration.none),
+  })
+}
 
 const markdownColors = HighlightStyle.define([
   { tag: tags.heading1, color: 'var(--syntax-heading, #ed6fbb)', fontWeight: '700', fontSize: '1.52em', lineHeight: '1.45' },
@@ -71,26 +128,44 @@ function getStats(text) {
   return { words: (text.match(/[\p{L}\p{N}]+(?:[’'_\-][\p{L}\p{N}]+)*/gu) || []).length, characters: text.length }
 }
 
-function completionSource(propsRef) {
-  return (context) => {
+function completionSource(propsRef, modeRef) {
+  return function complete(context) {
+    if (propsRef.current.vimMode && modeRef.current !== 'INSERT') return null
     const line = context.state.doc.lineAt(context.pos)
     const before = context.state.sliceDoc(line.from, context.pos)
     const wiki = /\[\[([^\]\n]*)$/.exec(before)
     if (wiki) {
       const from = context.pos - wiki[1].length
+      const query = wiki[1]
+      if (query.includes('|')) return null
+      const title = query.replace(/[\[\]\r\n|]/g, ' ').trim()
+      const normalized = normalizeTitle(title)
+      const available = (propsRef.current.notes || []).filter(n => !n.deletedAt && !n.isTemplate)
+      function applyNote(view, note, replaceFrom, replaceTo) {
+        if (!note) return
+        const tail = view.state.sliceDoc(replaceTo, replaceTo + 2)
+        const text = makeWikiLink(note).slice(2)
+        view.dispatch({ changes: { from: replaceFrom, to: replaceTo + (tail === ']]' ? 2 : tail.startsWith(']') ? 1 : 0), insert: text }, selection: { anchor: replaceFrom + text.length }, userEvent: 'input.complete' })
+      }
+      const options = available.filter(n => normalizeTitle(n.title || 'Sin título').includes(normalized)).map(note => ({
+        label: note.title || 'Sin título', type: 'text', detail: 'Enlazar nota',
+        apply(view, completion, replaceFrom, replaceTo) { applyNote(view, note, replaceFrom, replaceTo) },
+      }))
+      if (title && !available.some(n => normalizeTitle(n.title || 'Sin título') === normalized)) {
+        options.unshift({
+          label: `Crear «${title}»`, type: 'text', detail: 'Nueva nota',
+          apply(view, completion, replaceFrom, replaceTo) {
+            const latestTitle = view.state.sliceDoc(replaceFrom, replaceTo).replace(/[\[\]\r\n|]/g, ' ').trim()
+            if (latestTitle) applyNote(view, propsRef.current.onCreateNote?.(latestTitle), replaceFrom, replaceTo)
+          },
+        })
+      }
       return {
         from,
-        options: (propsRef.current.notes || []).filter(n => n.id !== propsRef.current.noteId && !n.deletedAt).map(note => ({
-          label: note.title || 'Sin título', type: 'text', detail: 'Nota',
-          apply(view, completion, replaceFrom, replaceTo) {
-            const tail = view.state.sliceDoc(replaceTo, replaceTo + 2)
-            const title = (note.title || 'Sin título').replace(/[\[\]\n|]/g, ' ')
-            const sameTitles = (propsRef.current.notes || []).filter(n => (n.title || 'Sin título') === (note.title || 'Sin título') && !n.deletedAt)
-            const text = sameTitles.length > 1 ? `${note.id}|${title}]]` : `${title}]]`
-            view.dispatch({ changes: { from: replaceFrom, to: replaceTo + (tail === ']]' ? 2 : tail.startsWith(']') ? 1 : 0), insert: text }, selection: { anchor: replaceFrom + text.length }, userEvent: 'input.complete' })
-          },
-        })),
-        validFor: /^[^\]\n]*$/,
+        options,
+        // Re-run for every edit, including spaces, so the create label stays current.
+        filter: false,
+        update: (_result, _from, _to, nextContext) => complete(nextContext),
       }
     }
     const slash = /(?:^|\s)\/([\p{L}]*)$/u.exec(before)
@@ -119,16 +194,34 @@ function completionSource(propsRef) {
   }
 }
 
-const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', onChange, notes = [], onNavigate, fontSize = 15, onStats, onScrollRatio }, ref) {
+const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange }, ref) {
   const containerRef = useRef(null)
   const viewRef = useRef(null)
   const propsRef = useRef({})
-  propsRef.current = { noteId, value, onChange, notes, onNavigate, fontSize, onStats, onScrollRatio }
+  propsRef.current = { noteId, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange }
   const activeNoteRef = useRef(noteId)
   const historiesRef = useRef(new Map())
   const suppressChange = useRef(false)
   const fontCompartment = useRef(new Compartment())
+  const vimCompartment = useRef(new Compartment())
+  const numbersCompartment = useRef(new Compartment())
+  const modeRef = useRef('NORMAL')
   const createStateRef = useRef(null)
+
+  function openWiki(view, pos) {
+    const link = scanWikiLinks(view.state.doc.toString()).find(item => pos >= item.from && pos < item.to)
+    if (!link) return false
+    const existing = resolveWikiTarget(link.target, propsRef.current.notes)
+    const note = existing || propsRef.current.onCreateNote?.(link.label || link.target)
+    if (!note) return false
+    if (!existing) {
+      const text = makeWikiLink(note)
+      view.dispatch({ changes: { from: link.from, to: link.to, insert: text }, userEvent: 'input.complete' })
+    }
+    // Let the source edit persist before React switches to the destination note.
+    queueMicrotask(() => propsRef.current.onNavigate?.(note.id))
+    return true
+  }
 
   function insert(text) {
     const view = viewRef.current
@@ -201,30 +294,63 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
   useImperativeHandle(ref, () => ({ focus: () => viewRef.current?.focus(), insert, wrap, command }), [])
 
   useEffect(() => {
-    const source = completionSource(propsRef)
+    const source = completionSource(propsRef, modeRef)
+    const modeMonitor = ViewPlugin.fromClass(class {
+      constructor(view) {
+        this.view = view
+        this.cm = getCM(view)
+        this.listener = event => {
+          modeRef.current = event.mode.toUpperCase() + (event.subMode ? ` ${event.subMode === 'linewise' ? 'LINE' : 'BLOCK'}` : '')
+          view.dom.dataset.vimMode = modeRef.current
+          propsRef.current.onVimModeChange?.(modeRef.current)
+          if (event.mode !== 'insert') queueMicrotask(() => { if (viewRef.current === view) closeCompletion(view) })
+        }
+        this.cm?.on('vim-mode-change', this.listener)
+        if (this.cm) vimSaveHandlers.set(this.cm, () => propsRef.current.onSave?.())
+        modeRef.current = 'NORMAL'
+        view.dom.dataset.vimMode = 'NORMAL'
+        queueMicrotask(() => propsRef.current.onVimModeChange?.('NORMAL'))
+      }
+      destroy() {
+        this.cm?.off('vim-mode-change', this.listener)
+        if (this.cm) vimSaveHandlers.delete(this.cm)
+        delete this.view.dom.dataset.vimMode
+      }
+    })
+    const vimExtensions = () => propsRef.current.vimMode ? [vim(), modeMonitor] : []
+    const numbersExtensions = () => propsRef.current.vimMode || propsRef.current.relativeNumbers ? [numberGutter(propsRef.current.relativeNumbers), highlightActiveLineGutter()] : []
+    const completionAllowed = view => !propsRef.current.vimMode || getCM(view)?.state.vim?.insertMode
+    const configuredCompletionKeys = completionKeymap.map(binding => ({ ...binding, run: view => {
+      if (!completionAllowed(view) || (propsRef.current.vimMode && binding.key === 'Escape')) return false
+      return binding.run?.(view) || false
+    } }))
     createStateRef.current = (doc) => EditorState.create({
       doc,
       extensions: [
+        vimCompartment.current.of(vimExtensions()),
+        numbersCompartment.current.of(numbersExtensions()),
         history(), drawSelection(), dropCursor(), highlightSpecialChars(), rectangularSelection(),
+        highlightActiveLine(), wikiDecorations(propsRef),
         EditorState.allowMultipleSelections.of(true), EditorView.lineWrapping,
         markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false }),
         indentOnInput(), bracketMatching(), closeBrackets(), syntaxHighlighting(markdownColors),
         autocompletion({ override: [source], activateOnTyping: true, icons: true, defaultKeymap: false, maxRenderedOptions: 20 }),
         Prec.highest(keymap.of([
-          { key: 'Tab', run: v => hasNextSnippetField(v.state) ? nextSnippetField(v) : acceptCompletion(v) },
-          ...completionKeymap,
+          { key: 'Tab', run: v => completionAllowed(v) && (hasNextSnippetField(v.state) ? nextSnippetField(v) : acceptCompletion(v)) },
+          ...configuredCompletionKeys,
         ])),
         search({ top: true }), highlightSelectionMatches(),
         keymap.of([
-          { key: 'Mod-b', run: () => command('bold') },
-          { key: 'Mod-i', run: () => command('italic') },
+          { key: 'Mod-b', run: () => !propsRef.current.vimMode && command('bold') },
+          { key: 'Mod-i', run: () => !propsRef.current.vimMode && command('italic') },
           { key: 'Mod-Shift-k', run: () => command('link') },
+          { key: 'Mod-Enter', run: view => openWiki(view, view.state.selection.main.head) },
           ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab,
         ]),
         placeholder('Empieza a escribir… / para insertar, [[ para enlazar una nota'),
         editorTheme,
         fontCompartment.current.of(EditorView.theme({ '&': { fontSize: `${propsRef.current.fontSize}px` } })),
-        EditorView.contentAttributes.of({ 'aria-label': 'Contenido de la nota en Markdown', spellcheck: 'true', autocapitalize: 'off', autocorrect: 'off' }),
+        EditorView.contentAttributes.of({ 'aria-label': 'Contenido de la nota en Markdown', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off' }),
         EditorView.updateListener.of(update => {
           if (!update.docChanged) return
           const nextValue = update.state.doc.toString()
@@ -238,16 +364,11 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
             propsRef.current.onScrollRatio?.(max > 0 ? view.scrollDOM.scrollTop / max : 0)
           },
           mousedown(event, view) {
-            if (!event.ctrlKey && !event.metaKey) return false
+            if (event.button !== 0 || event.shiftKey) return false
+            if (!event.target.closest?.('.cm-wiki-link') && !event.ctrlKey && !event.metaKey) return false
             const pos = view.posAtCoords({ x: event.clientX, y: event.clientY })
             if (pos == null) return false
-            const line = view.state.doc.lineAt(pos)
-            for (const match of line.text.matchAll(/\[\[([^\]\n]+)\]\]/g)) {
-              if (pos < line.from + match.index || pos > line.from + match.index + match[0].length) continue
-              const target = match[1].split('|')[0].trim()
-              const note = propsRef.current.notes.find(n => !n.deletedAt && (n.id === target || n.title?.toLocaleLowerCase() === target.toLocaleLowerCase()))
-              if (note) { event.preventDefault(); propsRef.current.onNavigate?.(note.id); return true }
-            }
+            if (openWiki(view, pos)) { event.preventDefault(); return true }
             return false
           },
         }),
@@ -255,6 +376,8 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
     })
     const view = new EditorView({ state: createStateRef.current(propsRef.current.value), parent: containerRef.current })
     viewRef.current = view
+    // Keep reconfiguration functions with the instance; toggles preserve document undo.
+    view.tintaReconfigure = () => [vimCompartment.current.reconfigure(vimExtensions()), numbersCompartment.current.reconfigure(numbersExtensions())]
     activeNoteRef.current = propsRef.current.noteId
     propsRef.current.onStats?.(getStats(propsRef.current.value))
     return () => { view.destroy(); viewRef.current = null }
@@ -272,7 +395,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
         const cached = historiesRef.current.get(noteId)
         view.setState(cached?.state.doc.toString() === value ? cached.state : createStateRef.current(value))
         activeNoteRef.current = noteId
-        view.dispatch({ effects: fontCompartment.current.reconfigure(EditorView.theme({ '&': { fontSize: `${propsRef.current.fontSize}px` } })) })
+        view.dispatch({ effects: [fontCompartment.current.reconfigure(EditorView.theme({ '&': { fontSize: `${propsRef.current.fontSize}px` } })), ...view.tintaReconfigure()] })
         view.scrollDOM.scrollTop = cached?.scroll || 0
         propsRef.current.onStats?.(getStats(value))
       } else if (view.state.doc.toString() !== value) {
@@ -290,6 +413,16 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
   useEffect(() => {
     viewRef.current?.dispatch({ effects: fontCompartment.current.reconfigure(EditorView.theme({ '&': { fontSize: `${fontSize}px` } })) })
   }, [fontSize])
+
+  useEffect(() => {
+    const view = viewRef.current
+    if (view) view.dispatch({ effects: view.tintaReconfigure() })
+  }, [vimMode, relativeNumbers])
+
+  useEffect(() => {
+    // Renames, creation and deletion update link decoration without changing Markdown.
+    viewRef.current?.dispatch({})
+  }, [notes])
 
   return <div className="markdown-editor" ref={containerRef} />
 })
