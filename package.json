@@ -1,0 +1,40 @@
+{
+  "name": "tinta-notes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Editor personal de notas Markdown para Windows",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "start": "electron .",
+    "test": "node --test electron/*.test.cjs",
+    "package": "npm run build && node scripts/package.cjs",
+    "test:desktop": "node tests/desktop.cjs"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/commands": "^6.8.0",
+    "@codemirror/lang-markdown": "^6.3.0",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/language-data": "^6.5.0",
+    "@codemirror/search": "^6.5.0",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.36.0",
+    "@lezer/highlight": "^1.2.0",
+    "dompurify": "^3.2.0",
+    "highlight.js": "^11.11.0",
+    "lucide-react": "^0.468.0",
+    "marked": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "^18.3.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "electron": "^43.0.0",
+    "vite": "^6.3.0",
+    "playwright": "^1.51.0"
+  }
+}
