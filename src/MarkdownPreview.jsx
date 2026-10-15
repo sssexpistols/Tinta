@@ -4,6 +4,8 @@ import DOMPurify from 'dompurify'
 import hljs from 'highlight.js'
 import { resolveWikiTarget } from './wiki'
 import './editor.css'
+import {parseCodeInfo} from './codeBlocks.js'
+import {renderDiagrams} from './diagrams.js'
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
@@ -20,12 +22,15 @@ export function renderMarkdown(value, notes) {
         return DOMPurify.sanitize(text, { ALLOW_DATA_ATTR: false, FORBID_ATTR: ['data-note-id', 'data-task-index', 'data-wiki-create'] })
       },
       code({ text, lang }) {
-        const language = (lang || '').trim().split(/\s+/)[0]
+        const {language,filename,title,line}=parseCodeInfo(lang)
+        if(language.toLowerCase()==='mermaid')return `<pre class="mermaid-source">${escapeHTML(text)}</pre>`
         let content = escapeHTML(text)
         if (language && hljs.getLanguage(language)) {
           try { content = hljs.highlight(text, { language, ignoreIllegals: true }).value } catch { /* Keep escaped plain text for invalid grammars. */ }
         }
-        return `<pre class="code-block"${language ? ` data-language="${escapeHTML(language)}"` : ''}><code class="hljs${language ? ` language-${escapeHTML(language)}` : ''}">${content}</code></pre>`
+        const header=filename||title||line?`<div class="code-file-header">${title?`<b>${escapeHTML(title)}</b>`:''}${filename?`<span class="code-filename">${escapeHTML(filename)}</span>`:''}${line?`<small>Línea ${line}</small>`:''}</div>`:''
+        const numbered=line?`<span class="code-line-numbers" aria-hidden="true">${text.split('\n').map((_,i)=>line+i).join('\n')}</span><span class="code-source">${content}</span>`:content
+        return `${header?'<section class="code-with-file">'+header:''}<pre class="code-block"${language ? ` data-language="${escapeHTML(language)}"` : ''}><code class="hljs${line?' has-line-numbers':''}${language ? ` language-${escapeHTML(language)}` : ''}">${numbered}</code></pre>${header?'</section>':''}`
       },
       checkbox({ checked }) {
         return `<input type="checkbox" class="markdown-task" data-task-index="${taskIndex++}" aria-label="Marcar tarea"${checked ? ' checked' : ''}> `
@@ -61,7 +66,7 @@ export function renderMarkdown(value, notes) {
   })
 }
 
-export default function MarkdownPreview({ value = '', notes = [], onNavigate, onCreateNote, onToggleTask, scrollRatio }) {
+export default function MarkdownPreview({ value = '', notes = [], onNavigate, onCreateNote, onToggleTask, scrollRatio, theme='dark' }) {
   const containerRef = useRef(null)
   const html = useMemo(() => renderMarkdown(value, notes), [value, notes])
 
@@ -71,11 +76,14 @@ export default function MarkdownPreview({ value = '', notes = [], onNavigate, on
     container.scrollTop = Math.max(0, Math.min(1, scrollRatio)) * (container.scrollHeight - container.clientHeight)
   }, [scrollRatio])
 
+  useEffect(()=>{let alive=true;const article=containerRef.current?.querySelector('.markdown-body');if(article){article.innerHTML=html;void renderDiagrams(article,theme,()=>alive);}return()=>{alive=false;};},[html,theme])
+
   useEffect(() => {
+    // Apply after resetting the preview, including when only its theme changes.
     // Only Markdown-generated tasks can edit the document; arbitrary HTML controls stay inert.
     const container = containerRef.current
     container.querySelectorAll('input').forEach(input => {
-      if (!input.classList.contains('markdown-task') || input.type !== 'checkbox' || input.dataset.taskIndex == null || !onToggleTask) input.disabled = true
+      input.disabled = !input.classList.contains('markdown-task') || input.type !== 'checkbox' || input.dataset.taskIndex == null || !onToggleTask
     })
     container.querySelectorAll('img').forEach(img => { img.loading = 'lazy'; img.decoding = 'async' })
     // Raw rendered Markdown inputs are not React-controlled nodes, so listen to the native event.
@@ -87,7 +95,7 @@ export default function MarkdownPreview({ value = '', notes = [], onNavigate, on
     }
     container.addEventListener('change', change)
     return () => container.removeEventListener('change', change)
-  }, [html, onToggleTask])
+  }, [html, theme, onToggleTask])
 
   async function onClick(event) {
     const anchor = event.target.closest?.('a')

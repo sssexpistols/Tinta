@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell, session } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, session, clipboard } = require('electron');
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
@@ -106,6 +106,7 @@ async function askCloseWithoutFlush() {
 }
 
 function registerIpc() {
+  handle('tinta:copy-text',text=>{if(typeof text!=='string'||text.length>65536)throw new Error('Texto para copiar no válido.');clipboard.writeText(text);if(clipboard.readText()!==text)throw new Error('No se pudo acceder al portapapeles. Inténtalo de nuevo.');return true;});
   handle('tinta:ai-config', async()=>{await aiReady;return ollama.config;});
   handle('tinta:ai-models', ()=>ollama.models());
   handle('tinta:ai-configure', async config=>{await aiReady;return ollama.configure(config);});
@@ -188,7 +189,7 @@ function createWindow() {
   rendererGone = false;
   mainWindow = new BrowserWindow({
     width: 1500, height: 940, minWidth: 900, minHeight: 580, show: false,
-    frame: false, autoHideMenuBar: true, backgroundColor: '#0c0d0f', title: 'Tinta',
+    frame: false, autoHideMenuBar: true, backgroundColor: '#0c0d0f', title: 'Tinta '+require('../package.json').version,
     icon: path.join(__dirname, '../assets/tinta.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true, spellcheck: true, devTools: Boolean(devUrl) || testMode },
   });

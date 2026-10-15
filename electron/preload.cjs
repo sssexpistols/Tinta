@@ -18,6 +18,7 @@ ipcRenderer.on('tinta:before-close', async () => {
 
 contextBridge.exposeInMainWorld('tinta', Object.freeze({
   platform: process.platform,
+  copyText: text => ipcRenderer.invoke('tinta:copy-text',text),
   load: () => ipcRenderer.invoke('tinta:load'),
   save: state => ipcRenderer.invoke('tinta:save', state),
   getStorageStatus: () => ipcRenderer.invoke('tinta:storage-status'),

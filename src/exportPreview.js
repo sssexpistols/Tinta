@@ -3,11 +3,13 @@ import appStyles from './styles.css?raw';
 import editorStyles from './editor.css?raw';
 import {renderMarkdown} from './MarkdownPreview.jsx';
 import {dateLabel} from './model.js';
+import {renderDiagrams} from './diagrams.js';
 import {getBacklinks} from './wiki.js';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function buildPreviewExport(note,notes,theme,metadata=true){
+export async function buildPreviewExport(note,notes,theme,metadata=true){
  const safeTheme=['dark','light','gruvbox'].includes(theme)?theme:'dark';
  const content=document.createElement('div');content.innerHTML=renderMarkdown(note.body,notes);
+ await renderDiagrams(content,safeTheme);
  content.querySelectorAll('input').forEach(el=>el.disabled=true);
  content.querySelectorAll('a').forEach(el=>{const href=el.getAttribute('href')||'';if(!/^https?:\/\//i.test(href)){el.removeAttribute('href');el.title='Referencia interna: '+el.textContent;}el.removeAttribute('data-note-id');el.removeAttribute('data-wiki-create');});
  const backlinks=getBacklinks(note,notes).map(n=>`<span class="export-backlink">↙ ${esc(n.title)}</span>`).join(' ');
