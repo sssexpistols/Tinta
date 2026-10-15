@@ -397,7 +397,8 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, noteTitle, v
 
   useEffect(() => {
     const view = viewRef.current
-    if (!view || propsRef.current.readOnly) return
+    // Read-only prevents user edits, not loading the newly selected document.
+    if (!view) return
     suppressChange.current = true
     try {
       if (noteId !== activeNoteRef.current) {

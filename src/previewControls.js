@@ -5,11 +5,12 @@ function button(label,icon,action){const b=document.createElement('button');b.ty
 async function feedback(button,job){button.disabled=true;try{await job();button.dataset.feedback='success';button.textContent='✓';button.setAttribute('aria-label','Copiado');}catch{button.dataset.feedback='error';button.textContent='!';button.setAttribute('aria-label','No se pudo copiar');}finally{button.disabled=false;setTimeout(()=>{if(button.isConnected){button.innerHTML=button.dataset.icon;button.setAttribute('aria-label',button.title);delete button.dataset.feedback;}},1600);}}
 function copyButton(label,icon,job){const b=button(label,icon,b=>feedback(b,job));b.dataset.icon=icons[icon];return b;}
 const copyText=text=>window.tinta?.copyText?window.tinta.copyText(text):navigator.clipboard.writeText(text);
-async function copyDiagram(svg,background){
+async function copyDiagram(svg){
  const clone=svg.cloneNode(true),box=svg.viewBox.baseVal,width=box.width||800,height=box.height||600;
  const scale=Math.min(2,4096/Math.max(width,height));clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width',String(width*scale));clone.setAttribute('height',String(height*scale));clone.removeAttribute('style');
+ clone.style.setProperty('background','transparent','important');
  const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml;charset=utf-8'}));
- try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=Math.ceil(width*scale);canvas.height=Math.ceil(height*scale);const ctx=canvas.getContext('2d');ctx.fillStyle=background||'#171717';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);await window.tinta.copyImage(canvas.toDataURL('image/png'));}finally{URL.revokeObjectURL(url);}
+ try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=Math.ceil(width*scale);canvas.height=Math.ceil(height*scale);const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0,canvas.width,canvas.height);await window.tinta.copyImage(canvas.toDataURL('image/png'));}finally{URL.revokeObjectURL(url);}
 }
 function attachDiagram(figure,source,expand){
  const svg=figure.querySelector('svg');if(!svg)return;
@@ -19,7 +20,7 @@ function attachDiagram(figure,source,expand){
  const change=factor=>{zoom=Math.min(4,Math.max(.25,zoom*factor));paint();};const reset=()=>{zoom=1;x=y=0;paint();};
  controls.append(button('Acercar diagrama','plus',()=>change(1.25)),button('Restablecer diagrama','reset',reset),button('Alejar diagrama','minus',()=>change(.8)),counter);
  if(expand)controls.append(button('Ampliar diagrama','expand',()=>expand(svg,source)));
- const copy=document.createElement('div');copy.className='diagram-copy';copy.append(copyButton('Copiar Mermaid','source',()=>copyText(source)),copyButton('Copiar imagen del diagrama','copy',()=>copyDiagram(svg,getComputedStyle(figure).backgroundColor)));
+ const copy=document.createElement('div');copy.className='diagram-copy';copy.append(copyButton('Copiar Mermaid','source',()=>copyText(source)),copyButton('Copiar imagen del diagrama','copy',()=>copyDiagram(svg)));
  figure.append(copy,controls);paint();
  viewport.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,startX:x,startY:y};viewport.setPointerCapture(e.pointerId);viewport.classList.add('is-dragging');});
  viewport.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;x=drag.startX+e.clientX-drag.x;y=drag.startY+e.clientY-drag.y;paint();});
@@ -35,7 +36,7 @@ export function installPreviewControls(article,isCurrent){
   const close=()=>{if(!dialog||dialog.classList.contains('is-closing'))return;const target=dialog;target.classList.add('is-closing');setTimeout(()=>{target.close();target.remove();if(dialog===target)dialog=null;previous?.isConnected&&previous.focus();},matchMedia('(prefers-reduced-motion:reduce)').matches?0:160);};
   heading.append(title,button('Cerrar diagrama ampliado','close',close));const figure=document.createElement('figure');figure.className='mermaid-diagram';const clone=svg.cloneNode(true);clone.style.transform='';figure.append(clone);dialog.append(heading,figure);document.body.append(dialog);attachDiagram(figure,source);dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.addEventListener('click',e=>{if(e.target===dialog)close();});dialog.showModal();
  }
- for(const pre of article.querySelectorAll('pre.code-block')){const code=pre.querySelector('code');if(!code)continue;const source=(code.querySelector('.code-source')||code).textContent;pre.classList.add('interactive-code');pre.append(copyButton('Copiar código','copy',()=>copyText(source)));}
+ for(const pre of article.querySelectorAll('pre.code-block')){const code=pre.querySelector('code');if(!code)continue;const parts=[...code.querySelectorAll('.code-source')];const source=parts.length?parts.map(part=>part.textContent).join('\n'):code.textContent;pre.classList.add('interactive-code');pre.append(copyButton('Copiar código','copy',()=>copyText(source)));}
  // Mermaid keeps the source outside SVG so copying never includes UI or line numbers.
  for(const figure of article.querySelectorAll('.mermaid-diagram'))if(isCurrent())attachDiagram(figure,figure.tintaSource||'',expand);
  return ()=>{if(dialog){dialog.close();dialog.remove();dialog=null;}};

@@ -1,40 +1,40 @@
-# Verificación 1.4.0
+# Verificación 1.5.0
 
-112 comprobaciones automatizadas distintas aprobadas, sin contar repeticiones:
+128 comprobaciones automatizadas distintas aprobadas, sin contar repeticiones:
 
-- 41 unitarias: almacenamiento y recuperación, snapshots, enlaces, predicción local, exportación, categorías, metadatos, atajos y contexto de prosa/código.
-- 14 de escritorio base: creación, tareas, estado, etiquetas, búsqueda, vistas, enlaces, papelera, cierre y persistencia. Ejecutadas en el paquete 1.4.
-- 12 de Vim, enlaces y compatibilidad de versiones, desde el proyecto.
-- 16 de plantillas, exportación HTML/PDF, IA simulada, cancelación, Vim y persistencia, desde el proyecto.
-- 16 de biblioteca, menús, etiquetas, Mermaid, metadatos, controles inertes y atajos personalizados. Desde el proyecto y el paquete 1.4.
-- 12 nuevas de la versión 1.4, desde el proyecto y el paquete final.
-- Una integración real con qwen2.5:7b: sugerencia, aceptación con Tab y verificación exacta del contenido guardado en un perfil de prueba del ejecutable 1.4.
+- 44 unitarias: almacenamiento, recuperación, snapshots, enlaces, exportación, predicción local, categorías, metadatos, atajos, división de resaltado multilínea y vaciado de papelera con selección válida.
+- 14 de escritorio base, sobre el ejecutable 1.5: creación, Markdown, tareas, búsqueda, vistas, enlaces, papelera, cierre y persistencia.
+- 12 de Vim, enlaces y compatibilidad, desde el proyecto.
+- 16 de plantillas, exportación HTML/PDF, cancelación de IA simulada y persistencia, desde el proyecto.
+- 16 de biblioteca, menús, etiquetas, Mermaid, metadatos, controles inertes y atajos personalizados, sobre el ejecutable 1.5.
+- 12 de controles del preview, formato y atajos con Vim, contexto de prosa/SQL y sugerencias Mermaid, sobre el ejecutable 1.5.
+- 14 de la versión 1.5, desde el proyecto y sobre el ejecutable final.
 
-## Casos nuevos
+## Casos específicos de esta entrega
 
-Copiar código sin título, ruta ni números; Mermaid copia su fuente y genera una imagen PNG válida; zoom, desplazamiento y reset; diálogo ampliado con Escape, devolución del foco y bloqueo de atajos detrás del diálogo. HTML conserva SVG sin botones. Se comprueba que un diagrama horizontal cabe en el ancho disponible.
+Se compara el cuerpo completo de varias plantillas incluidas, una plantilla personal y dos notas en papelera, con Vim activado y desactivado. Se comprueba que el título y el preview correspondan, que el editor permanezca de solo lectura cuando corresponde, que navegar no cambie las notas y que el historial de deshacer sobreviva al regreso a la nota editable.
 
-Negrita, deshacer y rehacer sin Vim; cursiva en insertar y negrita en visual; Ctrl+N desde ambos modos con el editor enfocado; tareas, encabezados y búsqueda local. Las combinaciones ya personalizadas sobreviven a la incorporación de nuevos atajos.
+Los previews aparecen con hover y foco de teclado, permiten desplazar el contenido y cierran con Escape. No cambian la selección ni crean notas. El selector Ctrl+T aplica el cuerpo ampliado completo. Se verificó y corrigió el caso de desplazamiento de la lista inmediatamente después de pasar el ratón.
 
-La IA recibe prosa sin código anterior, no encadena solicitudes al aceptar, rechaza Rust dentro de SQL y permite aceptar un bloque Mermaid y verlo renderizado. Las pruebas unitarias cubren cercas dentro de citas, contextos extensos, cierres correctos, separación entre palabras y eliminación de prefijos repetidos.
+El botón de vaciado y el menú contextual requieren confirmación. Cancelar recibe el foco inicial y conserva las notas. Confirmar incluye las notas ocultas por búsqueda y conserva notas activas y plantillas. El menú admite Shift+F10 y queda deshabilitado con papelera vacía. Las pruebas unitarias cubren notas restauradas después de abrir la confirmación, notas recién enviadas a papelera y eliminación de la última nota de una colección. El reinicio confirma la persistencia y el snapshot previo intacto.
 
-## Comparación real de modelos
+Los bloques numerados y de texto ajustan líneas sin desbordamiento horizontal. Los números siguientes se colocan después de toda la altura de la línea anterior. Se verifica copia exacta de tabulaciones, Unicode, espacios y saltos de línea, sin números ni metadatos. Los comentarios multilínea conservan el resaltado, incluidas líneas vacías.
 
-Se probaron cuatro entradas ficticias con qwen2.5-coder:3b y qwen2.5:7b. El modelo de 7B produjo mejores continuaciones en estos ejemplos: prosa en español, una explicación de ramas de Git, SQL y un diagrama con editar → git add → git commit. Las últimas consultas directas con el modelo cargado tardaron aproximadamente 0,3–0,8 segundos; la prueba final dentro de la app tardó unos 1,9 segundos incluyendo la pausa de escritura y guardado. No son garantías de latencia ni una evaluación general de calidad.
+La imagen copiada se decodifica como PNG y se examinan sus píxeles: esquina transparente, píxeles exteriores con alfa cero y figuras con píxeles opacos. El fondo de la app sigue visible. La exportación HTML mantiene código ajustado y SVG sin botones interactivos; las suites anteriores también validan PDF y temas de exportación.
 
-Se conservó el modelo 3B, se guardó ollama.before-v1.4.0.json y se seleccionó qwen2.5:7b. Las pruebas no abrieron ni editaron las notas personales. Los filtros reducen errores de contexto, pero no garantizan que todas las sugerencias sean correctas.
+## Revisión y empaquetado
 
-## Revisión visual y empaquetado
+- Compilación Vite y empaquetado Electron Windows x64 correctos. Persiste el aviso de tamaño de bundle; no impide compilar ni arrancar.
+- Capturas del preview de plantilla y de código/diagrama revisadas en Gruvbox. Pruebas anteriores cubren selectores y diagramas al cambiar entre claro y oscuro.
+- Git: rama de desarrollo separada, merge local a main y etiqueta v1.5.0. Código, guía, verificación y manifest acompañan la entrega.
+- ZIP comprobado por CRC. SHA-256 de ejecutables anteriores comparados antes y después del trabajo.
 
-- Build Vite y paquete Electron Windows x64 correctos. Mermaid continúa cargándose bajo demanda; persiste el aviso de tamaño de bundle.
-- Captura final del ejecutable revisada: diagrama horizontal completo, iconos, controles, márgenes y tema oscuro.
-- Exportaciones HTML/PDF de regresión mantienen diagramas y código; HTML no contiene controles interactivos. El PDF mantiene paginación y tema; no es una captura píxel a píxel de la ventana.
-- Código etiquetado, manifest de versión, ZIP con comprobación CRC y bundle Git completo. Los ejecutables anteriores se comparan por SHA-256.
+## Límites de las pruebas
 
-## Límites del entorno
+Las pruebas usan perfiles aislados, con notas ficticias. No leen ni modifican la colección personal. Ollama se simula en las suites de regresión; esta entrega no cambia modelos ni repite la evaluación real realizada en 1.4.
 
-El portapapeles nativo de Windows no está disponible para automatización. Las pruebas sustituyen sus métodos únicamente dentro del proceso de prueba, verifican el texto recibido y comprueban que la imagen PNG generada se decodifica como nativeImage no vacía. La aplicación normal comprueba el resultado y muestra un fallo si no puede copiar.
+El portapapeles nativo de Windows no está disponible en este entorno de automatización. Se sustituyen sus métodos solo dentro del proceso de prueba y se verifica el texto y la imagen PNG que reciben. No se comprobó el pegado en Word ni el formatter de un editor externo: el destino decide si conserva la transparencia y si formatea al pegar.
 
-Los procesos de prueba usan --no-sandbox y --disable-gpu, que no forman parte del lanzamiento normal. La app mantiene sandbox, aislamiento de contexto y Node desactivado en el editor. Todos los perfiles de prueba están aislados. Algunos intentos iniciales fallaron por permisos locales retirados al reanudar el chat, por selectores que también encontraban los nuevos iconos SVG y por una respuesta simulada que repetía siempre el mismo texto; se corrigieron el entorno o las pruebas y las suites finales pasaron.
+Los procesos de prueba usan --no-sandbox y --disable-gpu, solo en pruebas. El lanzamiento normal conserva sandbox, aislamiento de contexto y Node desactivado en el editor. Una reanudación del chat revocó el permiso temporal para conexiones locales; se restableció y todas las suites finales pasaron. Los primeros intentos también corrigieron un selector interno del editor y el comportamiento de hover al desplazar la lista.
 
-No se probaron otros sistemas operativos, firma comercial, plugins ni todas las posibles sintaxis de Mermaid. Las combinaciones de Inkdrop y Obsidian no son idénticas: se documentan las disponibles en Tinta y se permite personalizarlas.
+Vaciar papelera elimina notas de la colección actual. No purga backups o snapshots históricos ni equivale a un borrado seguro del disco. El formato de guardado permanece compatible con el esquema 1.
