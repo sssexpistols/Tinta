@@ -5,6 +5,7 @@ import hljs from 'highlight.js'
 import { resolveWikiTarget } from './wiki'
 import './editor.css'
 import {parseCodeInfo} from './codeBlocks.js'
+import {highlightLines} from './highlightLines.js'
 import {renderDiagrams} from './diagrams.js'
 import {installPreviewControls} from './previewControls.js'
 
@@ -30,7 +31,7 @@ export function renderMarkdown(value, notes) {
           try { content = hljs.highlight(text, { language, ignoreIllegals: true }).value } catch { /* Keep escaped plain text for invalid grammars. */ }
         }
         const header=filename||title||line?`<div class="code-file-header">${title?`<b>${escapeHTML(title)}</b>`:''}${filename?`<span class="code-filename">${escapeHTML(filename)}</span>`:''}${line?`<small>Línea ${line}</small>`:''}</div>`:''
-        const numbered=line?`<span class="code-line-numbers" aria-hidden="true">${text.split('\n').map((_,i)=>line+i).join('\n')}</span><span class="code-source">${content}</span>`:content
+        const numbered=line?highlightLines(content).map((html,i)=>`<span class="code-row"><span class="code-line-numbers" aria-hidden="true">${line+i}</span><span class="code-source">${html}</span></span>`).join(''):`<span class="code-source">${content}</span>`
         return `${header?'<section class="code-with-file">'+header:''}<pre class="code-block"${language ? ` data-language="${escapeHTML(language)}"` : ''}><code class="hljs${line?' has-line-numbers':''}${language ? ` language-${escapeHTML(language)}` : ''}">${numbered}</code></pre>${header?'</section>':''}`
       },
       checkbox({ checked }) {

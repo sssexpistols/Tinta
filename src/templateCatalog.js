@@ -1,4 +1,5 @@
 import {builtInTemplates as previous} from './templates.js';
+import {templateGuides} from './templateGuides.js';
 const categories={'builtin-study':'Estudio','builtin-cornell':'Estudio','builtin-clean-code':'Desarrollo','builtin-pattern':'Desarrollo','builtin-deploy':'Planning','builtin-tasks':'Organización','builtin-debug':'Investigación','builtin-adr':'Planning'};
 const definitions=[
  ['codebase','Codebase exploration','Investigación','Entender un repositorio desde su entrada hasta sus límites.',[
@@ -20,6 +21,6 @@ const definitions=[
  ['refactor-plan','Refactoring plan','Planning','Mejorar la estructura conservando el comportamiento.',[
  ['Motivo','[Qué cambio futuro es difícil con la estructura actual.]'],['Comportamiento a preservar','[Entradas, salidas, errores y efectos secundarios.]'],['Protección inicial','- [ ] Pruebas del comportamiento actual.\n- [ ] Medición de rendimiento si aplica.\n- [ ] Punto de restauración en Git.'],['Pasos pequeños','1. [Cambio mecánico]\n2. [Separar responsabilidad]\n3. [Eliminar duplicación demostrada]'],['Después de cada paso','- [ ] Ejecutar pruebas relevantes.\n- [ ] Revisar el diff.\n- [ ] Crear un commit coherente.'],['Criterio de finalización','[Mejora observable y límites; evitar rediseños no necesarios.]'],['Reversión','[Cómo revertir los pasos sin perder datos.]']]],
 ];
-export const catalogTemplates=[...previous.map(t=>({...t,category:categories[t.id]})),...definitions.map(([id,title,category,description,sections])=>({id:'builtin-'+id,title,category,description,tags:[category],body:'# '+title+'\n\n'+sections.map(([heading,text])=>'## '+heading+'\n'+text).join('\n\n')+'\n'}))].map(t=>({...t,isBuiltin:true,isTemplate:true,notebookId:'inbox',status:'active',pinned:false,deletedAt:null,createdAt:'2026-10-14T00:00:00Z',updatedAt:'2026-10-14T00:00:00Z'}));
+export const catalogTemplates=[...previous.map(t=>({...t,category:categories[t.id]})),...definitions.map(([id,title,category,description,sections])=>({id:'builtin-'+id,title,category,description,tags:[category],body:'# '+title+'\n\n'+sections.map(([heading,text])=>'## '+heading+'\n'+text).join('\n\n')+'\n'}))].map(t=>({...t,body:t.body.trimEnd()+'\n\n'+(templateGuides[t.id.replace('builtin-','')]||'').trim()+'\n',isBuiltin:true,isTemplate:true,notebookId:'inbox',status:'active',pinned:false,deletedAt:null,createdAt:'2026-10-14T00:00:00Z',updatedAt:'2026-10-14T00:00:00Z'}));
 export const templateCategories=['Todas','Estudio','Desarrollo','Investigación','Planning','Organización','Mis plantillas'];
 export const templateCategory=t=>t.isBuiltin?t.category:(t.templateCategory||'Mis plantillas');

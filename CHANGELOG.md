@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.0
+
+- Synchronizes the Markdown editor when switching read-only templates and trashed notes, preserving editable-note history and preventing content writes while browsing.
+- Hover and keyboard-focus template previews in both the library and picker. All 17 built-in worksheets now include tailored investigation, worked examples, decision tables and follow-up guidance; personal templates and previously created notes remain untouched.
+- Empty Trash from its sidebar context menu or panel button, with counted confirmation and cancellation. Deletes only confirmed IDs still in trash, including search-hidden notes.
+- Diagram clipboard PNG has a transparent canvas while preserving the selected node palette and the in-app backdrop.
+- Preview code wraps by default; line-number gutters track each wrapped source line. Clipboard code preserves original whitespace and excludes UI metadata. Multiline syntax tokens stay correctly styled.
+- Compatible schema 1 and immutable notes.before-v1.5.0.json. Prior releases and local Ollama settings remain unchanged.
+
 ## 1.4.0
 
 - Preview controls copy code without line numbers, copy Mermaid source or a PNG image, zoom, pan, reset and open a focused diagram dialog. Controls follow the theme and stay out of HTML/PDF exports.
