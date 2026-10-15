@@ -1,12 +1,12 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { Compartment, EditorSelection, EditorState, Prec, Transaction } from '@codemirror/state'
 import { Decoration, EditorView, GutterMarker, ViewPlugin, drawSelection, dropCursor, gutter, highlightActiveLine, highlightActiveLineGutter, highlightSpecialChars, keymap, placeholder, rectangularSelection } from '@codemirror/view'
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap, indentWithTab, undo, redo } from '@codemirror/commands'
 import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } from '@codemirror/language'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { acceptCompletion, autocompletion, closeBrackets, closeBracketsKeymap, closeCompletion, completionKeymap, hasNextSnippetField, nextSnippetField, snippet, startCompletion } from '@codemirror/autocomplete'
-import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search'
+import { highlightSelectionMatches, search, searchKeymap, openSearchPanel } from '@codemirror/search'
 import { tags } from '@lezer/highlight'
 import { getCM, vim, Vim } from '@replit/codemirror-vim'
 import { makeWikiLink, normalizeTitle, resolveWikiTarget, scanWikiLinks } from './wiki'
@@ -195,11 +195,11 @@ function completionSource(propsRef, modeRef) {
   }
 }
 
-const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange, aiEnabled=false, onAiStatus, readOnly=false }, ref) {
+const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, noteTitle, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange, aiEnabled=false, onAiStatus, readOnly=false }, ref) {
   const containerRef = useRef(null)
   const viewRef = useRef(null)
   const propsRef = useRef({})
-  propsRef.current = { noteId, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange, aiEnabled, onAiStatus, readOnly }
+  propsRef.current = { noteId, noteTitle, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange, aiEnabled, onAiStatus, readOnly }
   const activeNoteRef = useRef(noteId)
   const historiesRef = useRef(new Map())
   const suppressChange = useRef(false)
@@ -228,7 +228,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
 
   function insert(text) {
     const view = viewRef.current
-    if (!view) return
+    if (!view || propsRef.current.readOnly) return
     const { from, to } = view.state.selection.main
     view.dispatch({ changes: { from, to, insert: text }, selection: { anchor: from + text.length }, scrollIntoView: true, userEvent: 'input' })
     view.focus()
@@ -236,7 +236,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
 
   function wrap(before, after = before, fallback = 'texto') {
     const view = viewRef.current
-    if (!view) return
+    if (!view || propsRef.current.readOnly) return
     const { from, to } = view.state.selection.main
     const selected = view.state.sliceDoc(from, to)
     if (from >= before.length && view.state.sliceDoc(from - before.length, from) === before && view.state.sliceDoc(to, to + after.length) === after) {
@@ -250,15 +250,15 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
 
   function prefixLines(prefix, matcher) {
     const view = viewRef.current
-    if (!view) return
+    if (!view || propsRef.current.readOnly) return
     const selection = view.state.selection.main
     const first = view.state.doc.lineAt(selection.from)
-    const last = view.state.doc.lineAt(selection.to)
+    const last = view.state.doc.lineAt(selection.to > selection.from && view.state.doc.lineAt(selection.to).from === selection.to ? selection.to - 1 : selection.to)
     const changes = []
     for (let number = first.number; number <= last.number; number++) {
       const line = view.state.doc.line(number)
       const existing = matcher?.exec(line.text)
-      changes.push({ from: line.from, to: line.from + (existing?.[0].length || 0), insert: existing ? '' : prefix })
+      changes.push({ from: line.from, to: line.from + (existing?.[0].length || 0), insert: existing ? '' : typeof prefix==='function'?prefix(number-first.number):prefix })
     }
     view.dispatch({ changes, scrollIntoView: true, userEvent: 'input' })
     view.focus()
@@ -266,8 +266,17 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
 
   function command(name) {
     const view = viewRef.current
-    if (!view) return false
+    if (!view || (propsRef.current.readOnly && name!=='find')) return false
+    const cm=getCM(view),wasVisual=!!cm?.state.vim?.visualMode;
+    if(wasVisual){const selection=view.state.selection;Vim.exitVisualMode(cm,false);view.dispatch({selection});}
+    if(/^heading[1-6]$/.test(name)){prefixLines('#'.repeat(Number(name.at(-1)))+' ',/^#{1,6} /);if(wasVisual)view.dispatch({selection:{anchor:view.state.selection.main.to}});return true;}
     switch (name) {
+      case 'undo': return undo(view)
+      case 'redo': return redo(view)
+      case 'find': return openSearchPanel(view)
+      case 'codeblock': wrap('```\n', '\n```', 'código'); break
+      case 'ordered': prefixLines(i=>`${i+1}. `, /^\d+\. /); break
+      case 'rule': insert('\n\n---\n\n'); break
       case 'bold': wrap('**', '**', 'negrita'); break
       case 'italic': wrap('*', '*', 'cursiva'); break
       case 'strike': wrap('~~', '~~', 'texto'); break
@@ -291,6 +300,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
       case 'autocomplete': startCompletion(view); break
       default: return false
     }
+    if(wasVisual)view.dispatch({selection:{anchor:view.state.selection.main.to}})
     return true
   }
 
@@ -346,9 +356,6 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
         ])),
         search({ top: true }), highlightSelectionMatches(),
         keymap.of([
-          { key: 'Mod-b', run: () => !propsRef.current.vimMode && command('bold') },
-          { key: 'Mod-i', run: () => !propsRef.current.vimMode && command('italic') },
-          { key: 'Mod-Shift-k', run: () => command('link') },
           { key: 'Mod-Enter', run: view => openWiki(view, view.state.selection.main.head) },
           ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab,
         ]),
@@ -390,7 +397,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
 
   useEffect(() => {
     const view = viewRef.current
-    if (!view) return
+    if (!view || propsRef.current.readOnly) return
     suppressChange.current = true
     try {
       if (noteId !== activeNoteRef.current) {

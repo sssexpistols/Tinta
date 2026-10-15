@@ -6,6 +6,7 @@ import { resolveWikiTarget } from './wiki'
 import './editor.css'
 import {parseCodeInfo} from './codeBlocks.js'
 import {renderDiagrams} from './diagrams.js'
+import {installPreviewControls} from './previewControls.js'
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
@@ -76,7 +77,7 @@ export default function MarkdownPreview({ value = '', notes = [], onNavigate, on
     container.scrollTop = Math.max(0, Math.min(1, scrollRatio)) * (container.scrollHeight - container.clientHeight)
   }, [scrollRatio])
 
-  useEffect(()=>{let alive=true;const article=containerRef.current?.querySelector('.markdown-body');if(article){article.innerHTML=html;void renderDiagrams(article,theme,()=>alive);}return()=>{alive=false;};},[html,theme])
+  useEffect(()=>{let alive=true,cleanup;const article=containerRef.current?.querySelector('.markdown-body');if(article){article.innerHTML=html;void renderDiagrams(article,theme,()=>alive).then(()=>{if(alive)cleanup=installPreviewControls(article,()=>alive);});}return()=>{alive=false;cleanup?.();};},[html,theme])
 
   useEffect(() => {
     // Apply after resetting the preview, including when only its theme changes.

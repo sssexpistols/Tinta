@@ -1,3 +1,4 @@
+import {predictionContext} from '../shared/prediction-context.mjs';
 import {StateEffect,StateField,Prec} from '@codemirror/state';
 import {Decoration,EditorView,WidgetType,ViewPlugin,keymap} from '@codemirror/view';
 import {completionStatus} from '@codemirror/autocomplete';
@@ -17,20 +18,20 @@ export function prediction(propsRef,modeRef){
  const plugin=ViewPlugin.fromClass(class{
   constructor(view){this.view=view;this.serial=0;this.timer=null;this.id=null;this.destroyed=false;}
   cancel(){clearTimeout(this.timer);this.serial++;if(this.id)api?.aiCancel(this.id).catch(()=>{});this.id=null;propsRef.current.onAiStatus?.('IA local');}
-  eligible(){const p=propsRef.current;return !!(api&&p.aiEnabled&&this.view.hasFocus&&(!p.vimMode||modeRef.current==='INSERT')&&this.view.state.selection.main.empty&&!completionStatus(this.view.state)&&!this.view.composing);}
+  eligible(){const p=propsRef.current;return !!(api&&p.aiEnabled&&!p.readOnly&&this.view.hasFocus&&(!p.vimMode||modeRef.current==='INSERT')&&this.view.state.selection.main.empty&&!completionStatus(this.view.state)&&!this.view.composing);}
   update(update){
    if(update.docChanged||update.selectionSet||update.focusChanged){
     this.cancel();
     // Only actual typing starts a request; opening a note or moving the cursor does not.
-    if(update.docChanged&&update.transactions.some(t=>t.isUserEvent('input'))){const serial=this.serial;this.timer=setTimeout(()=>this.request(serial),950);}
+    if(update.docChanged&&update.transactions.some(t=>t.isUserEvent('input')&&!t.isUserEvent('input.complete'))){const serial=this.serial;this.timer=setTimeout(()=>this.request(serial),950);}
    }
   }
   async request(serial){
    if(!this.eligible()||serial!==this.serial)return;
    const view=this.view,state=view.state,pos=state.selection.main.head,note=propsRef.current.noteId;
-   const before=state.sliceDoc(Math.max(0,pos-6000),pos),after=state.sliceDoc(pos,Math.min(state.doc.length,pos+1000));if(!before.trim())return;
+   const context=predictionContext(state.sliceDoc(0,pos),state.sliceDoc(pos,Math.min(state.doc.length,pos+1000)),propsRef.current.noteTitle||'');const {before,after,title,topic,quotePrefix}=context;if(!before.trim())return;
    this.id=crypto.randomUUID();propsRef.current.onAiStatus?.('Pensando localmente…');
-   try{const result=await api.aiPredict({id:this.id,before,after});if(this.destroyed||serial!==this.serial)return;
+   try{const result=await api.aiPredict({id:this.id,before,after,title,topic,quotePrefix});if(this.destroyed||serial!==this.serial)return;
     if(this.eligible()&&propsRef.current.noteId===note&&view.state.doc===state.doc&&view.state.selection.main.head===pos&&result.text){view.dispatch({effects:suggestion.of({text:result.text,pos})});propsRef.current.onAiStatus?.('Tab acepta · Esc descarta');}
     else propsRef.current.onAiStatus?.('IA local');
    }catch{if(!this.destroyed&&serial===this.serial)propsRef.current.onAiStatus?.('Ollama no disponible · revisa Preferencias');}

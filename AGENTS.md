@@ -10,3 +10,5 @@ The user uses the released desktop app for personal notes. Preserve the running 
 - Commit coherent changes on the feature branch. After required tests pass, merge with `--no-ff` and create a version tag. The user has authorized this local release workflow; no automatic remote push or publishing is authorized.
 - Keep source and dependency lockfile in Git. Exclude user notes, runtime caches, node_modules, test data and generated binaries. Update CHANGELOG and release instructions with behavior and compatibility details.
 - Plugins remain postponed. Local Ollama prediction is optional and must remain disabled until the user configures it. Never send notes to cloud providers.
+- App and configurable Markdown shortcuts take priority over Vim; preserve Ctrl+N, Ctrl+B and Ctrl+I behavior in insert and visual modes. Existing custom keybindings must survive newly added defaults.
+- Build prediction context from the full local prefix before truncation, excluding unrelated fenced code in prose. Accepting a suggestion must not trigger another automatic request. Validate changes with synthetic prose, SQL and Markdown cases.

@@ -19,7 +19,7 @@ export async function renderDiagrams(container,theme,isCurrent=()=>true){
  for(const host of container.querySelectorAll('.mermaid-source')){
   if(!isCurrent())return;
   const source=host.textContent;
-  try{const svg=await renderDiagram(source,theme);if(!isCurrent())return;const figure=document.createElement('figure');figure.className='mermaid-diagram';figure.setAttribute('aria-label','Diagrama Mermaid');figure.innerHTML=svg;host.replaceWith(figure);}
+  try{const svg=await renderDiagram(source,theme);if(!isCurrent())return;const figure=document.createElement('figure');figure.className='mermaid-diagram';figure.setAttribute('aria-label','Diagrama Mermaid');figure.innerHTML=svg;figure.tintaSource=source;host.replaceWith(figure);}
   catch(e){if(!isCurrent())return;const error=document.createElement('div');error.className='diagram-error';error.setAttribute('role','status');error.textContent='No se pudo dibujar Mermaid. Revisa la sintaxis. '+(source.length>30000?'El bloque supera 30.000 caracteres.':'');host.before(error);host.classList.add('mermaid-invalid');}
  }
 }
