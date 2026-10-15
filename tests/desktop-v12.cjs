@@ -1,7 +1,7 @@
 const {_electron:electron}=require('playwright');
 const fs=require('node:fs/promises'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'),dataDir=path.join(root,'.test-results','v12-'+Date.now());
-let app,page,server,port,delay=60,generationError=false;const requests=[],errors=[],results=[];
+let generation=0;let app,page,server,port,delay=60,generationError=false;const requests=[],errors=[],results=[];
 const pass=name=>{results.push(name);console.log('PASS '+name);};
 const runtime=process.env.TINTA_ELECTRON_PATH||path.join(root,'node_modules/electron/dist/electron.exe');
 async function launch(){const env={...process.env,TINTA_DATA_DIR:dataDir,TINTA_TEST_MODE:'1',TINTA_OLLAMA_TEST_PORT:String(port)};delete env.ELECTRON_RUN_AS_NODE;app=await electron.launch({executablePath:runtime,args:process.env.TINTA_PACKAGED?['--no-sandbox','--disable-gpu']:[root,'--no-sandbox','--disable-gpu'],env,timeout:30000});page=await app.firstWindow();page.on('pageerror',e=>errors.push(e.message));await page.getByLabel('Título de la nota',{exact:true}).waitFor();}
@@ -18,7 +18,7 @@ async function exportAs(format,theme,file){
 }
 (async()=>{
  await fs.mkdir(dataDir,{recursive:true});
- server=http.createServer(async(req,res)=>{let body='';for await(const chunk of req)body+=chunk;const data=body?JSON.parse(body):{};requests.push({path:req.url,data});res.setHeader('Content-Type','application/json');if(req.url==='/api/tags')res.end(JSON.stringify({models:[{name:'tinta-test:local',size:1000},{name:'secret:cloud',size:1000}]}));else if(req.url==='/api/show')res.end(JSON.stringify({model_info:{architecture:'test'}}));else if(req.url==='/api/generate'&&generationError){res.statusCode=503;res.end('{}');}else if(req.url==='/api/generate')setTimeout(()=>res.end(JSON.stringify({response:' continuación local.'})),delay);else{res.statusCode=404;res.end('{}');}});
+ server=http.createServer(async(req,res)=>{let body='';for await(const chunk of req)body+=chunk;const data=body?JSON.parse(body):{};requests.push({path:req.url,data});res.setHeader('Content-Type','application/json');if(req.url==='/api/tags')res.end(JSON.stringify({models:[{name:'tinta-test:local',size:1000},{name:'secret:cloud',size:1000}]}));else if(req.url==='/api/show')res.end(JSON.stringify({model_info:{architecture:'test'}}));else if(req.url==='/api/generate'&&generationError){res.statusCode=503;res.end('{}');}else if(req.url==='/api/generate')setTimeout(()=>res.end(JSON.stringify({response:' continuación local. Variante '+(++generation)})),delay);else{res.statusCode=404;res.end('{}');}});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));port=server.address().port;
  await launch();assert.equal(requests.length,0);pass('IA apagada por defecto: no hay conexiones ni lectura de otras notas');
  await page.keyboard.press('Control+n');await page.getByLabel('Título de la nota',{exact:true}).fill('Mi sesión');const before=await save();const id=before.selectedNoteId;

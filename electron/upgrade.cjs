@@ -6,7 +6,7 @@ const {serializeState}=require('./storage.cjs');
 // immutable pre-upgrade snapshot before any 1.3 save can rotate normal backups.
 async function preserveUpgradeSnapshot(directory,state){
  if(!state)return;
- const file=path.join(directory,'notes.before-v1.3.0.json');
+ const file=path.join(directory,'notes.before-v1.4.0.json');
  try{await fs.writeFile(file,serializeState(state),{encoding:'utf8',flag:'wx',mode:0o600});}
  catch(error){if(error.code!=='EEXIST')throw error;}
 }

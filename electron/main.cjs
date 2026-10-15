@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, Menu, ipcMain, dialog, shell, session, clipboard } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, shell, session, clipboard, nativeImage } = require('electron');
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
@@ -106,6 +106,7 @@ async function askCloseWithoutFlush() {
 }
 
 function registerIpc() {
+  handle('tinta:copy-image',data=>{if(typeof data!=='string'||!data.startsWith('data:image/png;base64,')||data.length>16*1024*1024)throw new Error('Imagen no válida.');const image=nativeImage.createFromDataURL(data);const size=image.getSize();if(image.isEmpty()||size.width>4096||size.height>4096)throw new Error('Imagen demasiado grande.');clipboard.writeImage(image);if(clipboard.readImage().isEmpty())throw new Error('No se pudo copiar la imagen.');return true;});
   handle('tinta:copy-text',text=>{if(typeof text!=='string'||text.length>65536)throw new Error('Texto para copiar no válido.');clipboard.writeText(text);if(clipboard.readText()!==text)throw new Error('No se pudo acceder al portapapeles. Inténtalo de nuevo.');return true;});
   handle('tinta:ai-config', async()=>{await aiReady;return ollama.config;});
   handle('tinta:ai-models', ()=>ollama.models());

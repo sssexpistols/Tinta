@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0
+
+- Preview controls copy code without line numbers, copy Mermaid source or a PNG image, zoom, pan, reset and open a focused diagram dialog. Controls follow the theme and stay out of HTML/PDF exports.
+- App shortcuts take priority over Vim. Ctrl+N works in insert and visual modes; Markdown formatting, undo/redo and local search are configurable alongside app shortcuts. Existing custom combinations take priority over newly introduced editor defaults.
+- Prediction distinguishes prose from the current fenced language before truncating context, including quoted fences. Nearby cues allow Markdown lists, examples and Mermaid. Filters wrong-language code, repeated context and echoed prefixes; accepting a suggestion no longer starts an automatic request chain.
+- Compared local qwen2.5-coder:3b and qwen2.5:7b on synthetic Spanish, Git, SQL and diagram examples. Selected the general 7B model on this machine and retained the old model and configuration backup.
+- Preserves note schema 1, creates immutable notes.before-v1.4.0.json on upgrade, and keeps prior release executables unchanged.
+
 ## 1.3.0
 
 - Template library exposes 17 built-in templates in searchable categories alongside editable personal templates; empty notes offer a template button. Adds codebase exploration, performance improvement, hang/bug/dependency reports, reading summaries, concept deep dives, feature and refactoring plans.

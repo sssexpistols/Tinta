@@ -7,7 +7,7 @@ const version = require('../package.json').version;
   const buildRoot = path.join(root, '.build');
   await fs.mkdir(buildRoot, { recursive: true });
   const stage = await fs.mkdtemp(path.join(buildRoot, 'package-'));
-  for (const folder of ['dist', 'electron', 'assets']) {
+  for (const folder of ['dist', 'electron', 'assets', 'shared']) {
     await fs.cp(path.join(root, folder), path.join(stage, folder), {
       recursive: true, filter: file => !file.endsWith('.test.cjs') && !file.endsWith('README.md'),
     });
