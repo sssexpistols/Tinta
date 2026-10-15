@@ -195,11 +195,11 @@ function completionSource(propsRef, modeRef) {
   }
 }
 
-const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange, aiEnabled=false, onAiStatus }, ref) {
+const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange, aiEnabled=false, onAiStatus, readOnly=false }, ref) {
   const containerRef = useRef(null)
   const viewRef = useRef(null)
   const propsRef = useRef({})
-  propsRef.current = { noteId, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange, aiEnabled, onAiStatus }
+  propsRef.current = { noteId, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange, aiEnabled, onAiStatus, readOnly }
   const activeNoteRef = useRef(noteId)
   const historiesRef = useRef(new Map())
   const suppressChange = useRef(false)
@@ -207,6 +207,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
   const vimCompartment = useRef(new Compartment())
   const numbersCompartment = useRef(new Compartment())
   const aiCompartment = useRef(new Compartment())
+  const readOnlyCompartment=useRef(new Compartment())
   const modeRef = useRef('NORMAL')
   const createStateRef = useRef(null)
 
@@ -329,6 +330,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
     createStateRef.current = (doc) => EditorState.create({
       doc,
       extensions: [
+        readOnlyCompartment.current.of([EditorState.readOnly.of(propsRef.current.readOnly),EditorView.editable.of(!propsRef.current.readOnly)]),
         aiCompartment.current.of(propsRef.current.aiEnabled ? prediction(propsRef,modeRef) : []),
         vimCompartment.current.of(vimExtensions()),
         numbersCompartment.current.of(numbersExtensions()),
@@ -380,7 +382,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
     const view = new EditorView({ state: createStateRef.current(propsRef.current.value), parent: containerRef.current })
     viewRef.current = view
     // Keep reconfiguration functions with the instance; toggles preserve document undo.
-    view.tintaReconfigure = () => [aiCompartment.current.reconfigure(propsRef.current.aiEnabled ? prediction(propsRef,modeRef) : []), vimCompartment.current.reconfigure(vimExtensions()), numbersCompartment.current.reconfigure(numbersExtensions())]
+    view.tintaReconfigure = () => [readOnlyCompartment.current.reconfigure([EditorState.readOnly.of(propsRef.current.readOnly),EditorView.editable.of(!propsRef.current.readOnly)]),aiCompartment.current.reconfigure(propsRef.current.aiEnabled ? prediction(propsRef,modeRef) : []), vimCompartment.current.reconfigure(vimExtensions()), numbersCompartment.current.reconfigure(numbersExtensions())]
     activeNoteRef.current = propsRef.current.noteId
     propsRef.current.onStats?.(getStats(propsRef.current.value))
     return () => { view.destroy(); viewRef.current = null }
@@ -420,7 +422,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, value = '', 
   useEffect(() => {
     const view = viewRef.current
     if (view) view.dispatch({ effects: view.tintaReconfigure() })
-  }, [vimMode, relativeNumbers, aiEnabled])
+  }, [vimMode, relativeNumbers, aiEnabled, readOnly])
 
   useEffect(() => {
     // Renames, creation and deletion update link decoration without changing Markdown.

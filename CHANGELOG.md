@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0
+
+- Template library exposes 17 built-in templates in searchable categories alongside editable personal templates; empty notes offer a template button. Adds codebase exploration, performance improvement, hang/bug/dependency reports, reading summaries, concept deep dives, feature and refactoring plans.
+- Inline tag entry with Enter and suggestions; themed note context menu for move, duplicate, pin, copy reference, export and trash/restore.
+- Local Mermaid rendering with theme support, sanitized SVG, error fallback and rendered HTML/PDF export. Code fences support filename, title and starting line metadata.
+- Configurable app shortcuts with conflict checks, reserved editing keys, persistence and reset. Dialog exit animations and reduced-motion support. Visible version badge.
+- Local Ollama output normalization handles prose spacing and redundant code fences. Explicit 4096-token context and five-minute model keep-alive.
+- Preserves schema 1 and immutable notes.before-v1.3.0.json. Prior executables remain unchanged.
+
 ## 1.2.0
 
 - Themed keyboard-accessible notebook, status and sort menus replace native Windows selects.

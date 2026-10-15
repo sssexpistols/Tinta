@@ -1,29 +1,43 @@
-# Verificación 1.2.0
+# Verificación 1.3.0
 
-71 comprobaciones distintas aprobadas, sin contar repeticiones:
+93 comprobaciones distintas aprobadas, sin contar repeticiones:
 
-- 29 pruebas unitarias: almacenamiento, compatibilidad, snapshots, enlaces, predicción local y construcción segura del documento exportado.
-- 14 comprobaciones de regresión 1.0 desde el proyecto.
-- 12 comprobaciones de enlaces y Vim 1.1, desde el proyecto y desde el ejecutable 1.2 empaquetado.
-- 16 comprobaciones 1.2 en el ejecutable empaquetado. Las primeras 14 también se comprobaron desde el proyecto; paginación larga y fallo de generación se añadieron al recorrido final empaquetado.
+- 34 pruebas unitarias de almacenamiento, snapshots, enlaces, exportación, IA local, catálogo, metadatos de código y atajos.
+- 14 comprobaciones de regresión de escritorio desde el proyecto y el ejecutable 1.3.
+- 12 comprobaciones de enlaces, Vim, números relativos y compatibilidad, desde el proyecto y el ejecutable 1.3.
+- 16 comprobaciones de plantillas, temas, exportación, predicción simulada y persistencia, desde el proyecto y el ejecutable 1.3.
+- 16 comprobaciones nuevas de la versión 1.3 en el ejecutable empaquetado; las primeras 15 también se comprobaron desde el proyecto.
+- Una integración con Ollama real y qwen2.5-coder:3b desde el ejecutable 1.3: sugerencia de código, aceptación con Tab y comprobación exacta del texto guardado.
 
-## Casos nuevos
+## Funciones nuevas comprobadas
 
-IA desactivada sin conexiones; Ctrl+T conserva identidad y título; no reemplaza texto existente; menús temáticos con teclado; cursor suave en ambos modos y movimiento reducido; HTML con tema independiente y saneado; PDF real con colores; apertura independiente de HTML; exportación multipágina; aceptación de texto fantasma con Tab; descarte con Esc; cancelación al cambiar de nota; interacción con Vim normal/insertar; fallo del servidor sin impedir guardado; desactivación sin nuevas solicitudes; persistencia al reiniciar y ausencia de errores JavaScript.
+Catálogo de 17 plantillas incluidas, categorías, búsqueda, plantillas personales y creación de notas editables sin modificar el original. El catálogo incluido no se escribe como notas en la colección. Una nota vacía ofrece el selector y conserva su título al aplicar una plantilla.
 
-Las pruebas de IA usan un servidor HTTP ficticio en un puerto loopback aleatorio y notas artificiales. Se comprueba el contrato `/api/tags`, `/api/show`, `/api/generate`, contexto limitado, rechazo de modelos remotos, cancelación y tratamiento de errores. La integración no se ha evaluado con un modelo real: Ollama no se encontró en PATH ni en las ubicaciones estándar revisadas. No se descargaron modelos.
+Etiquetas en línea con Enter, sugerencias y Escape. Menú contextual sobre la nota correcta: duplicar, fijar, mover, copiar referencia, enviar a papelera y restaurar. Selector de estado temático y presencia de la animación de salida de diálogos.
 
-## Revisión visual y archivos
+Mermaid real, actualización con el tema, errores de sintaxis recuperables y eliminación de enlaces ejecutables. Código con filename, title y números de línea. Exportación HTML/PDF con SVG renderizado, encabezados de código y tema independiente.
 
-- Compilación de producción Vite y paquete Electron Windows x64 correctos. Persiste el aviso de tamaño de bundle; no impide la compilación.
-- Capturas de la app Gruvbox y HTML claro inspeccionadas.
-- PDF Gruvbox renderizado con Poppler: código Rust, tabla, tareas y texto legibles.
-- PDF largo: nueve páginas; extracción con pypdf conserva las 90 secciones y el marcador final. Primera y última página renderizadas para revisar la paginación.
-- Los archivos HTML incluyen estilos propios, resaltado, título escapado y política que bloquea scripts. Las imágenes HTTPS siguen siendo externas.
-- La configuración de IA queda fuera de notas y backups JSON. La colección conserva esquema 1 y los campos compatibles con versiones anteriores.
+Atajos personalizados, conflictos, persistencia tras reinicio y restablecimiento. Notas y ajustes sobreviven al reinicio sin errores JavaScript.
 
-Los lanzadores automatizados usan `--no-sandbox --disable-gpu` por las restricciones del entorno de pruebas. No se incorporan al ejecutable ni a sus accesos directos normales. La aplicación mantiene sandbox, aislamiento de contexto y Node desactivado en el editor. Todos los perfiles de prueba están aislados; no se abrió la colección personal.
+## Ollama real
 
-## Límites comprobados
+Se descargó qwen2.5-coder:3b (3,1B, Q4_K_M) y se activó en el archivo independiente de configuración de IA del usuario. Se comprobó el servidor local y la integración usando únicamente texto ficticio. La prueba final del ejecutable tardó aproximadamente siete segundos desde insertar el prefijo hasta aceptar y guardar la sugerencia, incluyendo la pausa de escritura y carga del modelo. Los tiempos varían con el equipo y la carga; no son una garantía.
 
-El PDF conserva el estilo, pero adapta la vista continua a páginas A4; no es una captura píxel a píxel de la ventana. Los enlaces internos se exportan como texto y las imágenes web necesitan conexión. No se probaron un modelo real, otros sistemas operativos, una firma comercial, plugins, un servidor Ollama modificado ni colecciones de tamaño extremo. Los estilos son propios inspirados en las referencias; no se afirma equivalencia exacta con cada animación de Inkdrop.
+Las pruebas simuladas adicionales verifican IA desactivada sin solicitudes, cancelación al cambiar de nota, descarte con Escape, interacción con Vim, fallo del servidor sin impedir el guardado, rechazo de modelos remotos y desactivación persistente. Hermes no se modificó.
+
+## Revisión visual y entrega
+
+- Compilación Vite y empaquetado Electron Windows x64 correctos. El aviso de tamaño de bundle no impide compilar; Mermaid se carga bajo demanda.
+- Capturas Gruvbox del editor, diagrama y menú de estado inspeccionadas.
+- PDF final renderizado con Poppler: una página, diagrama completo, metadatos y código legibles. La regresión también comprueba exportación larga multipágina.
+- HTML incluye estilos y SVG propios, con política que bloquea scripts. PDF adapta la vista a A4; no es una captura de los paneles de la app. Imágenes HTTPS siguen siendo externas y enlaces internos se exportan como texto.
+- Esquema de notas 1 conservado. Snapshot inmutable notes.before-v1.3.0.json antes de guardar una colección existente. Las pruebas usan perfiles aislados, nunca la colección personal.
+- Ejecutables anteriores verificados por SHA-256 y conservados. Entrega versionada con código, bundle Git y ZIP comprobado mediante CRC.
+
+## Límites de la comprobación
+
+El entorno automatizado no permite comprobar el portapapeles nativo de Windows: la prueba sustituye únicamente sus métodos en el proceso de prueba y verifica la referencia enviada por IPC. La app normal escribe y comprueba la lectura del portapapeles; muestra error si no puede acceder.
+
+Los lanzadores de pruebas usan --no-sandbox y --disable-gpu por restricciones del entorno. No se incorporan al ejecutable normal: el editor conserva sandbox, aislamiento de contexto y Node desactivado. Los primeros intentos del turno fallaron al abrir conexiones locales bloqueadas por permisos; después de conceder acceso, las suites terminaron correctamente.
+
+No se probaron otros sistemas operativos, firma comercial, plugins ni colecciones de tamaño extremo. Las animaciones y estilos son propios inspirados en las referencias; no se afirma equivalencia exacta con Inkdrop. La calidad semántica de las sugerencias de IA requiere revisión del usuario.
