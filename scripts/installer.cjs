@@ -28,4 +28,4 @@ const root=path.resolve(__dirname,'..'),pkg=require('../package.json');
   publish:[{provider:'github',owner:'sssexpistols',repo:'Tinta',releaseType:'release'}],
  }});
  console.log((process.argv.includes('--dir')?'Application bundle ready: ':'Installer ready: ')+pkg.version);
-})().catch(e=>{console.error(e);process.exitCode=1;});
+})().catch(e=>{console.error(e);process.exit(1);});
