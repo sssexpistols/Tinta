@@ -76,4 +76,8 @@ Usa ramas y una carpeta aislada: `$env:TINTA_DATA_DIR = "$pwd\.test-results\manu
 
 `npm run installer` genera NSIS en `.build/release`. Solo empaqueta el frontend compilado y las dependencias necesarias de escritorio. El workflow de GitHub prueba y construye al subir una etiqueta `v*`; publica únicamente si los pasos pasan. Incrementa la versión, el lockfile y las notas de release antes de etiquetar. No incluyas modelos, notas personales ni cachés en Git.
 
+Para preparar solo la carpeta ejecutable: `npm run build` y `npm run installer -- --dir`. No requiere compilar NSIS. Para una release desde Actions también puedes ejecutar el workflow sobre `main` con `publish` activado; las pruebas y la instalación aislada deben completarse antes de publicar.
+
+El flujo usa el ejecutor estándar gratuito de Windows en este repositorio público. No guarda cachés ni artefactos de Actions: los binarios se adjuntan directamente a GitHub Releases. No utiliza Git LFS, Packages, ejecutores de pago ni servicios de IA de nube.
+
 Consulta [CHANGELOG.md](CHANGELOG.md), [VERIFICATION.md](VERIFICATION.md) y [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

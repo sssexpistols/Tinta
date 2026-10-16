@@ -21,6 +21,10 @@ La configuración opcional permite continuar sin descargar. Una descarga simulad
 
 ## Empaquetado y CI
 
+La suite 1.6 también pasó sus 8 casos sobre `win-unpacked/Tinta.exe`, usando un perfil aislado. El paquete incluye sus dependencias y funciona sin Node.js instalado por separado. Para esta comprobación local fue necesario dar lectura/ejecución del directorio generado al sandbox de aplicaciones de Windows; no se cambiaron los permisos de las notas.
+
+La primera ejecución de GitHub Actions no llegó a iniciar el runner: GitHub informó de un bloqueo de facturación de la cuenta. Por tanto, todavía no se confirma una compilación ni instalación NSIS en CI. El flujo evita almacenamiento de artefactos y cachés de Actions y usa únicamente un runner estándar en el repositorio público.
+
 Vite compila correctamente. La carpeta Electron x64 se genera con sus dependencias de escritorio. En este equipo el compilador NSIS falla al iniciar con «Illegal System DLL Relocation»; no se han cambiado las protecciones del sistema. El workflow de GitHub construye el instalador en Windows, repite las suites, prueba el ejecutable empaquetado y hace una instalación silenciosa en una carpeta aislada antes de publicar. El resultado verificable de cada compilación está en [Actions](https://github.com/sssexpistols/Tinta/actions).
 
 `npm audit --omit=dev`: cero vulnerabilidades conocidas en dependencias de producción en la comprobación de esta entrega. Se actualizó el parser XML transitivo a 0.9.12. Vite advierte sobre el tamaño de algunos bundles; no impide compilar o arrancar.
