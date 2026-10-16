@@ -16,7 +16,7 @@ const root=path.resolve(__dirname,'..'),pkg=require('../package.json');
  runtime.packageManager='traversal@1';
  await fs.writeFile(path.join(stage,'package.json'),JSON.stringify(runtime,null,2));
  await fs.copyFile(path.join(root,'THIRD-PARTY-NOTICES.txt'),path.join(stage,'THIRD-PARTY-NOTICES.txt'));
- await require('electron-builder').build({projectDir:stage,targets:require('electron-builder').Platform.WINDOWS.createTarget(['nsis'],require('electron-builder').Arch.x64),publish:'never',config:{
+ await require('electron-builder').build({projectDir:stage,targets:require('electron-builder').Platform.WINDOWS.createTarget(process.argv.includes('--dir')?['dir']:['nsis'],require('electron-builder').Arch.x64),publish:'never',config:{
   appId:'app.tinta.notes',productName:'Tinta',artifactName:'Tinta-Setup-${version}.${ext}',
   toolsets:{nsis:'1.2.1'},
   directories:{app:stage,output:process.env.TINTA_RELEASE_DIR||path.join(root,'.build','release')},
@@ -27,5 +27,6 @@ const root=path.resolve(__dirname,'..'),pkg=require('../package.json');
   nsis:{oneClick:false,perMachine:false,allowToChangeInstallationDirectory:true,deleteAppDataOnUninstall:false,include:path.join(root,'packaging/installer.nsh'),createDesktopShortcut:true,shortcutName:'Tinta',installerLanguages:['es_ES','en_US']},
   publish:[{provider:'github',owner:'sssexpistols',repo:'Tinta',releaseType:'release'}],
  }});
- console.log('Installer ready: '+pkg.version);
+ console.log((process.argv.includes('--dir')?'Application bundle ready: ':'Installer ready: ')+pkg.version);
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
