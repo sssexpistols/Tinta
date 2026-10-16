@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0
+
+- Prediction requires actual typing and suppresses suffix echoes after accepting a suggestion or moving the cursor.
+- Windows-derived en-US/es-MX writing preferences, bilingual mode, reviewable local grammar rules and optional local Ollama review. Code and math are excluded from corrections.
+- Local MathJax LaTeX/mhchem, safe single-variable expression plots and linear regression with R². Preview controls, transparent PNG clipboard and rendered HTML/PDF exports.
+- Mathematical-model worksheet and formula/plot/regression slash commands. AI prompts can suggest those block types when requested by the current paragraph.
+- Optional Ollama runtime/model setup, RAM-based model recommendation, progress, cancellation and activation only after a confirmed download.
+- Windows NSIS installer and GitHub release updates with explicit download/restart and successful saving required before installation. GitHub Actions builds and tests releases.
+- Schema 1 retained with an immutable notes.before-v1.6.0.json snapshot. No cloud AI, personal-note migration or automatic deletion of previous portable builds.
+
 ## 1.5.0
 
 - Synchronizes the Markdown editor when switching read-only templates and trashed notes, preserving editable-note history and preventing content writes while browsing.

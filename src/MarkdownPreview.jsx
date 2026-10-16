@@ -7,6 +7,7 @@ import './editor.css'
 import {parseCodeInfo} from './codeBlocks.js'
 import {highlightLines} from './highlightLines.js'
 import {renderDiagrams} from './diagrams.js'
+import {renderScience} from './science.js'
 import {installPreviewControls} from './previewControls.js'
 
 function escapeHTML(value) {
@@ -26,6 +27,8 @@ export function renderMarkdown(value, notes) {
       code({ text, lang }) {
         const {language,filename,title,line}=parseCodeInfo(lang)
         if(language.toLowerCase()==='mermaid')return `<pre class="mermaid-source">${escapeHTML(text)}</pre>`
+        if(['math','latex','tex'].includes(language.toLowerCase()))return `<pre class="math-source">${escapeHTML(text)}</pre>`
+        if(language.toLowerCase()==='plot')return `<pre class="plot-source">${escapeHTML(text)}</pre>`
         let content = escapeHTML(text)
         if (language && hljs.getLanguage(language)) {
           try { content = hljs.highlight(text, { language, ignoreIllegals: true }).value } catch { /* Keep escaped plain text for invalid grammars. */ }
@@ -42,7 +45,7 @@ export function renderMarkdown(value, notes) {
         return `<a href="${escapeHTML(href)}"${title ? ` title="${escapeHTML(title)}"` : ''} rel="noopener noreferrer">${text}</a>`
       },
     },
-    extensions: [{
+    extensions: [{name:'displayMath',level:'block',start(src){return src.indexOf('$$')},tokenizer(src){const m=/^\$\$[ \t]*\n?([\s\S]+?)\n?\$\$(?:\n|$)/.exec(src);if(m)return {type:'displayMath',raw:m[0],text:m[1]};},renderer(t){return `<pre class="math-source">${escapeHTML(t.text)}</pre>`;}},{name:'inlineMath',level:'inline',start(src){return src.search(/\$|\\\(/)},tokenizer(src){const m=/^\$(?!\s)([^$\n]*?\S)\$(?!\d)/.exec(src)||/^\\\(([\s\S]+?)\\\)/.exec(src);if(m)return {type:'inlineMath',raw:m[0],text:m[1]};},renderer(t){return `<span class="math-source">${escapeHTML(t.text)}</span>`;}},{
       name: 'wikilink', level: 'inline',
       start(src) { return src.indexOf('[[') },
       tokenizer(src) {
@@ -78,7 +81,7 @@ export default function MarkdownPreview({ value = '', notes = [], onNavigate, on
     container.scrollTop = Math.max(0, Math.min(1, scrollRatio)) * (container.scrollHeight - container.clientHeight)
   }, [scrollRatio])
 
-  useEffect(()=>{let alive=true,cleanup;const article=containerRef.current?.querySelector('.markdown-body');if(article){article.innerHTML=html;void renderDiagrams(article,theme,()=>alive).then(()=>{if(alive)cleanup=installPreviewControls(article,()=>alive);});}return()=>{alive=false;cleanup?.();};},[html,theme])
+  useEffect(()=>{let alive=true,cleanup;const article=containerRef.current?.querySelector('.markdown-body');if(article){article.innerHTML=html;void Promise.all([renderDiagrams(article,theme,()=>alive),renderScience(article,theme,()=>alive)]).then(()=>{if(alive)cleanup=installPreviewControls(article,()=>alive);});}return()=>{alive=false;cleanup?.();};},[html,theme])
 
   useEffect(() => {
     // Apply after resetting the preview, including when only its theme changes.

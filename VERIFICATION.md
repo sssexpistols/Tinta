@@ -1,40 +1,40 @@
-# Verificación 1.5.0
+# Verificación 1.6.0
 
-128 comprobaciones automatizadas distintas aprobadas, sin contar repeticiones:
+146 comprobaciones locales distintas aprobadas el 16 de octubre de 2026:
 
-- 44 unitarias: almacenamiento, recuperación, snapshots, enlaces, exportación, predicción local, categorías, metadatos, atajos, división de resaltado multilínea y vaciado de papelera con selección válida.
-- 14 de escritorio base, sobre el ejecutable 1.5: creación, Markdown, tareas, búsqueda, vistas, enlaces, papelera, cierre y persistencia.
-- 12 de Vim, enlaces y compatibilidad, desde el proyecto.
-- 16 de plantillas, exportación HTML/PDF, cancelación de IA simulada y persistencia, desde el proyecto.
-- 16 de biblioteca, menús, etiquetas, Mermaid, metadatos, controles inertes y atajos personalizados, sobre el ejecutable 1.5.
-- 12 de controles del preview, formato y atajos con Vim, contexto de prosa/SQL y sugerencias Mermaid, sobre el ejecutable 1.5.
-- 14 de la versión 1.5, desde el proyecto y sobre el ejecutable final.
+| Suite | Casos |
+| --- | ---: |
+| Unitarias: almacenamiento, enlaces, contexto, gramática, gráficos, descarga y actualizaciones | 54 |
+| Escritorio base | 14 |
+| Vim, enlaces y compatibilidad | 12 |
+| Plantillas, exportación e IA simulada | 16 |
+| Biblioteca, menús, etiquetas, Mermaid y atajos | 16 |
+| Preview y atajos Markdown/Vim | 12 |
+| Plantillas, papelera y copia de recursos | 14 |
+| Escritura, ciencia y configuración opcional de IA | 8 |
 
-## Casos específicos de esta entrega
+La suite nueva reproduce aceptar una sugerencia, volver con Ctrl+Home, hacer clic al inicio y esperar sin escribir. No se hacen nuevas peticiones ni reaparece texto fantasma. También rechaza una respuesta que repite el texto posterior al cursor.
 
-Se compara el cuerpo completo de varias plantillas incluidas, una plantilla personal y dos notas en papelera, con Vim activado y desactivado. Se comprueba que el título y el preview correspondan, que el editor permanezca de solo lectura cuando corresponde, que navegar no cambie las notas y que el historial de deshacer sobreviva al regreso a la nota editable.
+Se comprueban idioma inicial y selección bilingüe, offsets de corrección, exclusión de código/matemáticas, sintaxis LaTeX, mhchem, funciones seguras sin eval, regresión y R², zoom, exportación HTML y PNG con píxeles visibles y canal alfa transparente. La plantilla matemática no modifica plantillas personales.
 
-Los previews aparecen con hover y foco de teclado, permiten desplazar el contenido y cierran con Escape. No cambian la selección ni crean notas. El selector Ctrl+T aplica el cuerpo ampliado completo. Se verificó y corrigió el caso de desplazamiento de la lista inmediatamente después de pasar el ratón.
+La configuración opcional permite continuar sin descargar. Una descarga simulada completa activa el modelo; fallar o cancelar no lo activa. Las actualizaciones simuladas no instalan sin una descarga terminada y un guardado correcto. La prueba de disco lleno confirma que se conserva abierta la app.
 
-El botón de vaciado y el menú contextual requieren confirmación. Cancelar recibe el foco inicial y conserva las notas. Confirmar incluye las notas ocultas por búsqueda y conserva notas activas y plantillas. El menú admite Shift+F10 y queda deshabilitado con papelera vacía. Las pruebas unitarias cubren notas restauradas después de abrir la confirmación, notas recién enviadas a papelera y eliminación de la última nota de una colección. El reinicio confirma la persistencia y el snapshot previo intacto.
+## Empaquetado y CI
 
-Los bloques numerados y de texto ajustan líneas sin desbordamiento horizontal. Los números siguientes se colocan después de toda la altura de la línea anterior. Se verifica copia exacta de tabulaciones, Unicode, espacios y saltos de línea, sin números ni metadatos. Los comentarios multilínea conservan el resaltado, incluidas líneas vacías.
+La suite 1.6 también pasó sus 8 casos sobre `win-unpacked/Tinta.exe`, usando un perfil aislado. El paquete incluye sus dependencias y funciona sin Node.js instalado por separado. Para esta comprobación local fue necesario dar lectura/ejecución del directorio generado al sandbox de aplicaciones de Windows; no se cambiaron los permisos de las notas.
 
-La imagen copiada se decodifica como PNG y se examinan sus píxeles: esquina transparente, píxeles exteriores con alfa cero y figuras con píxeles opacos. El fondo de la app sigue visible. La exportación HTML mantiene código ajustado y SVG sin botones interactivos; las suites anteriores también validan PDF y temas de exportación.
+La [validación completa en GitHub Actions](https://github.com/sssexpistols/Tinta/actions/runs/38975040052) aprobó las 146 comprobaciones de origen, la compilación NSIS, los 8 casos del ejecutable empaquetado y los mismos 8 casos sobre la aplicación instalada en una carpeta aislada. La instalación silenciosa terminó correctamente y se verificó el ejecutable instalado antes de abrirlo.
 
-## Revisión y empaquetado
+Vite compila correctamente. La carpeta Electron x64 se genera con sus dependencias de escritorio. En el entorno local el compilador NSIS no pudo iniciar; la compilación y la instalación se validaron en Windows de GitHub. El workflow repite las suites y exige que la aplicación instalada pase antes de publicar. Usa únicamente un runner estándar del repositorio público, sin cachés ni artefactos de Actions: los binarios se publican directamente en Releases. El resultado verificable de cada compilación está en [Actions](https://github.com/sssexpistols/Tinta/actions).
 
-- Compilación Vite y empaquetado Electron Windows x64 correctos. Persiste el aviso de tamaño de bundle; no impide compilar ni arrancar.
-- Capturas del preview de plantilla y de código/diagrama revisadas en Gruvbox. Pruebas anteriores cubren selectores y diagramas al cambiar entre claro y oscuro.
-- Git: rama de desarrollo separada, merge local a main y etiqueta v1.5.0. Código, guía, verificación y manifest acompañan la entrega.
-- ZIP comprobado por CRC. SHA-256 de ejecutables anteriores comparados antes y después del trabajo.
+`npm audit --omit=dev`: cero vulnerabilidades conocidas en dependencias de producción en la comprobación de esta entrega. Se actualizó el parser XML transitivo a 0.9.12. Vite advierte sobre el tamaño de algunos bundles; no impide compilar o arrancar.
 
-## Límites de las pruebas
+## Límites
 
-Las pruebas usan perfiles aislados, con notas ficticias. No leen ni modifican la colección personal. Ollama se simula en las suites de regresión; esta entrega no cambia modelos ni repite la evaluación real realizada en 1.4.
-
-El portapapeles nativo de Windows no está disponible en este entorno de automatización. Se sustituyen sus métodos solo dentro del proceso de prueba y se verifica el texto y la imagen PNG que reciben. No se comprobó el pegado en Word ni el formatter de un editor externo: el destino decide si conserva la transparencia y si formatea al pegar.
-
-Los procesos de prueba usan --no-sandbox y --disable-gpu, solo en pruebas. El lanzamiento normal conserva sandbox, aislamiento de contexto y Node desactivado en el editor. Una reanudación del chat revocó el permiso temporal para conexiones locales; se restableció y todas las suites finales pasaron. Los primeros intentos también corrigieron un selector interno del editor y el comportamiento de hover al desplazar la lista.
-
-Vaciar papelera elimina notas de la colección actual. No purga backups o snapshots históricos ni equivale a un borrado seguro del disco. El formato de guardado permanece compatible con el esquema 1.
+- Perfiles de prueba con notas ficticias; nunca se prueba sobre la colección personal.
+- Ollama y las descargas se simulan para regresión. No se descargan modelos en la computadora del usuario durante las pruebas. La calidad y velocidad de un modelo real varían.
+- Se comprueban los datos enviados al portapapeles simulado, no el pegado en Word ni el formatter de un editor externo.
+- No existe todavía una actualización real entre dos releases públicas de Tinta; la primera release establece el canal. El guardado previo y los estados del actualizador están cubiertos con pruebas.
+- La instalación no cuenta con certificado comercial de firma de código.
+- Los procesos automatizados usan `--no-sandbox --disable-gpu`; el lanzamiento normal conserva el sandbox del renderer.
+- Vaciar papelera elimina las notas de la colección actual, no purga snapshots o backups históricos. Se mantiene el esquema 1.

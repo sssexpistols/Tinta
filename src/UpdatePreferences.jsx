@@ -1,0 +1,7 @@
+import React,{useState,useEffect} from 'react';
+export default function UpdatePreferences({api,persist}){
+ const [state,setState]=useState(null),[error,setError]=useState('');
+ useEffect(()=>{let alive=true;const refresh=()=>api.updateStatus?.().then(s=>alive&&setState(s));refresh();const timer=setInterval(refresh,2000);return()=>{alive=false;clearInterval(timer);};},[api]);
+ async function run(action){setError('');try{await action();setState(await api.updateStatus());}catch(e){setError(e.message);}}
+ return <section className="settings-section"><h3>Actualizaciones</h3><p>Se consultan las releases públicas de sssexpistols/Tinta. Tú eliges cuándo descargar y reiniciar; primero se guardan tus notas.</p><div className="settings-buttons"><button className="secondary-button" disabled={!state||['unavailable','checking','downloading','downloaded'].includes(state.phase)} onClick={()=>run(()=>api.checkUpdates())}>Buscar actualizaciones</button>{state?.phase==='available'&&<button className="primary-button" onClick={()=>run(()=>api.downloadUpdate())}>Descargar {state.version}</button>}{state?.phase==='downloaded'&&<button className="primary-button" onClick={()=>run(async()=>{await persist();await api.installUpdate();})}>Guardar y reiniciar</button>}</div>{state?.phase==='downloading'&&<progress aria-label="Descarga de actualización" value={state.progress} max="100"/>}<p role="status">{error||state?.message}</p></section>;
+}
