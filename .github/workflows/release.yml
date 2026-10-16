@@ -4,6 +4,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the tested version as a GitHub release'
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -56,7 +61,7 @@ jobs:
             .build/release/Tinta-Setup-*.exe.blockmap
             .build/release/latest.yml
   publish:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main')
     needs: windows
     runs-on: ubuntu-latest
     permissions:
@@ -71,4 +76,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --title "Tinta ${GITHUB_REF_NAME#v}" --notes-file RELEASE-NOTES.md
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          if [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" != "$TAG" ]]; then
+            echo 'Tag does not match package version'; exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refusing to replace published assets"; exit 1
+          fi
+          gh release create "$TAG" release/* --target "$GITHUB_SHA" --title "Tinta $VERSION" --notes-file RELEASE-NOTES.md

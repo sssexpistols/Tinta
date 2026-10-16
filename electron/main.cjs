@@ -113,7 +113,7 @@ function registerIpc() {
   handle('tinta:copy-text',text=>{if(typeof text!=='string'||text.length>65536)throw new Error('Texto para copiar no válido.');clipboard.writeText(text);if(clipboard.readText()!==text)throw new Error('No se pudo acceder al portapapeles. Inténtalo de nuevo.');return true;});
   handle('tinta:ai-setup-status',async()=>{await aiReady;return setup.status();});
   handle('tinta:ai-setup-requested',()=>setup.requested());
-  handle('tinta:ai-install-runtime',()=>{if(testMode)throw new Error('Instalación del sistema deshabilitada en pruebas.');void setup.installRuntime();return {started:true};});
+  handle('tinta:ai-install-runtime',()=>{if(testMode)throw new Error('Instalación del sistema deshabilitada en pruebas.');if(['installing','downloading'].includes(setup.state.phase))throw new Error('Ya hay una instalación en curso.');void setup.installRuntime();return {started:true};});
   handle('tinta:ai-pull-model',async model=>{await aiReady;if(!require('./ai-setup.cjs').MODELS.some(m=>m.name===model))throw new Error('Modelo no permitido.');if(['installing','downloading'].includes(setup.state.phase))throw new Error('Ya hay una instalación en curso.');void setup.pull(model);return {started:true};});
   handle('tinta:ai-cancel-download',()=>setup.cancel());
   handle('tinta:update-status',()=>updates.state);
