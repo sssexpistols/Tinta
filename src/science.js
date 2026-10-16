@@ -32,6 +32,7 @@ export async function renderScience(container,theme='dark',isCurrent=()=>true){
   if(!isCurrent())return;const source=host.textContent,plot=host.classList.contains('plot-source'),inline=host.tagName==='SPAN';
   try{let html,description='';if(plot){const result=plotSVG(source,theme);html=result.svg;description=result.plot.curves.map(c=>c.label).join(' · ')+(result.plot.fit?` · R² = ${result.plot.fit.r2.toFixed(5)}`:'');}else html=await mathSVG(source,!inline);
    if(!isCurrent())return;const figure=document.createElement(inline?'span':'figure');figure.className=plot?'science-figure plot-figure':inline?'math-inline':'science-figure math-figure';figure.setAttribute('aria-label',plot?'Gráfico matemático':'Fórmula LaTeX');figure.innerHTML=html;figure.tintaSource=source;
+   if(!plot){const svg=figure.querySelector('svg');if(svg)svg.style.setProperty('--math-width',svg.getAttribute('width')||'auto');}
    if(description){const caption=document.createElement('figcaption');caption.textContent=description;figure.append(caption);}host.replaceWith(figure);
   }catch(e){if(!isCurrent())return;host.classList.add('science-error');host.setAttribute('title',e.message);const message=document.createElement('small');message.className='science-error-message';message.textContent=e.message;host.after(message);}
  }

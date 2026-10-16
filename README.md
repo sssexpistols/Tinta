@@ -67,6 +67,7 @@ Para invitar una estructura, termina un párrafo descriptivo con «Los pasos son
 
 ```powershell
 npm ci
+node node_modules/electron/install.js
 npm test
 npm run build
 npm start

@@ -22,6 +22,8 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
+      - name: Install the pinned Electron runtime
+        run: node node_modules/electron/install.js
       - run: npm test
       - run: npm run build
       - name: Desktop regression tests
