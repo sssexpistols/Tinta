@@ -45,7 +45,7 @@ jobs:
       - name: Test installer in an isolated directory
         shell: pwsh
         run: |
-          $target = Join-Path $pwd '.test-installed'
+          $target = Join-Path $pwd '.test-installed/Tinta'
           $setup = Get-ChildItem '.build/release/Tinta-Setup-*.exe' | Select-Object -First 1
           $env:TINTA_DATA_DIR = Join-Path $pwd '.test-results/installer-profile'
           $env:TINTA_TEST_MODE = '1'

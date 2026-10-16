@@ -6,7 +6,6 @@ Var TintaAIChoice
 Var TintaAICheck
 !macro customPageAfterChangeDir
   Page custom TintaAIPage TintaAILeave
-!macroend
 
 Function TintaAIPage
   ${If} ${isUpdated}
@@ -33,6 +32,7 @@ FunctionEnd
 Function TintaAILeave
   ${NSD_GetState} $TintaAICheck $TintaAIChoice
 FunctionEnd
+!macroend
 
 !macro customInstall
   ${If} $TintaAIChoice == ${BST_CHECKED}
