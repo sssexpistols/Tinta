@@ -67,6 +67,7 @@ Para invitar una estructura, termina un párrafo descriptivo con «Los pasos son
 
 ```powershell
 npm ci
+node node_modules/electron/install.js
 npm test
 npm run build
 npm start
@@ -81,4 +82,3 @@ Para preparar solo la carpeta ejecutable: `npm run build` y `npm run installer -
 El flujo usa el ejecutor estándar gratuito de Windows en este repositorio público. No guarda cachés ni artefactos de Actions: los binarios se adjuntan directamente a GitHub Releases. No utiliza Git LFS, Packages, ejecutores de pago ni servicios de IA de nube.
 
 Consulta [CHANGELOG.md](CHANGELOG.md), [VERIFICATION.md](VERIFICATION.md) y [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
-
