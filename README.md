@@ -77,4 +77,3 @@ Usa ramas y una carpeta aislada: `$env:TINTA_DATA_DIR = "$pwd\.test-results\manu
 `npm run installer` genera NSIS en `.build/release`. Solo empaqueta el frontend compilado y las dependencias necesarias de escritorio. El workflow de GitHub prueba y construye al subir una etiqueta `v*`; publica únicamente si los pasos pasan. Incrementa la versión, el lockfile y las notas de release antes de etiquetar. No incluyas modelos, notas personales ni cachés en Git.
 
 Consulta [CHANGELOG.md](CHANGELOG.md), [VERIFICATION.md](VERIFICATION.md) y [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
-
