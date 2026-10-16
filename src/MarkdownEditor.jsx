@@ -113,6 +113,9 @@ const editorTheme = EditorView.theme({
 })
 
 const snippetTemplates = [
+  ['formula', 'math', 'Fórmula LaTeX', '```math\n${E=mc^2}\n```'],
+  ['grafico', 'plot', 'Gráfico de una función', '```plot\n{"title":"Mi función","x":[-5,5],"y":[-1,25],"functions":["x^2"]}\n```'],
+  ['regresion', 'regression', 'Puntos y regresión lineal', '```plot\n{"title":"Regresión lineal","points":[[0,1],[1,3],[2,5]],"regression":"linear"}\n```'],
   ['tabla', 'table', 'Tabla de dos columnas', '| ${Columna 1} | ${Columna 2} |\n| --- | --- |\n| ${Contenido} | ${Contenido} |\n'],
   ['tarea', 'task', 'Lista de tareas', '- [ ] ${Nueva tarea}'],
   ['lista', 'list', 'Lista con viñetas', '- ${Primer elemento}\n- ${Segundo elemento}'],
@@ -195,11 +198,12 @@ function completionSource(propsRef, modeRef) {
   }
 }
 
-const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, noteTitle, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange, aiEnabled=false, onAiStatus, readOnly=false }, ref) {
+const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, noteTitle, value = '', onChange, notes = [], onNavigate, onCreateNote, onSave, fontSize = 15, onStats, onScrollRatio, vimMode = false, relativeNumbers = false, onVimModeChange, aiEnabled=false, onAiStatus, readOnly=false, writing }, ref) {
   const containerRef = useRef(null)
   const viewRef = useRef(null)
   const propsRef = useRef({})
-  propsRef.current = { noteId, noteTitle, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange, aiEnabled, onAiStatus, readOnly }
+  propsRef.current = { noteId, noteTitle, value, onChange, notes, onNavigate, onCreateNote, onSave, fontSize, onStats, onScrollRatio, vimMode, relativeNumbers, onVimModeChange, aiEnabled, onAiStatus, readOnly, writing }
+  useEffect(()=>{if(viewRef.current)viewRef.current.contentDOM.setAttribute('spellcheck',writing?.enabled?'true':'false');},[writing?.enabled])
   const activeNoteRef = useRef(noteId)
   const historiesRef = useRef(new Map())
   const suppressChange = useRef(false)
@@ -362,7 +366,7 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, noteTitle, v
         placeholder('Empieza a escribir… Ctrl+T para plantilla, / para insertar, [[ para enlazar'),
         editorTheme,
         fontCompartment.current.of(EditorView.theme({ '&': { fontSize: `${propsRef.current.fontSize}px` } })),
-        EditorView.contentAttributes.of({ 'aria-label': 'Contenido de la nota en Markdown', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off' }),
+        EditorView.contentAttributes.of({ 'aria-label': 'Contenido de la nota en Markdown', spellcheck: propsRef.current.writing?.enabled?'true':'false', autocapitalize: 'off', autocorrect: 'off' }),
         EditorView.updateListener.of(update => {
           if (!update.docChanged) return
           const nextValue = update.state.doc.toString()

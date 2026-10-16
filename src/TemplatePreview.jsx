@@ -2,6 +2,7 @@ import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'reac
 import {createPortal} from 'react-dom';
 import {renderMarkdown} from './MarkdownPreview.jsx';
 import {renderDiagrams} from './diagrams.js';
+import {renderScience} from './science.js';
 import {templateCategory} from './templateCatalog.js';
 import './templatePreview.css';
 
@@ -18,6 +19,7 @@ function Preview({item, anchor, theme, keep, close, hide}) {
     article.querySelectorAll('input').forEach(input=>input.disabled=true);
     article.querySelectorAll('a').forEach(a=>{a.removeAttribute('href');a.removeAttribute('tabindex');});
     void renderDiagrams(article,theme,()=>alive);
+    void renderScience(article,theme,()=>alive);
     return()=>{alive=false;};
   },[html,theme]);
   return createPortal(<section ref={ref} className="template-hover-preview" style={point} role="region" aria-label={'Vista previa de plantilla: '+item.title} onMouseEnter={keep} onMouseLeave={close} onFocus={keep} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))close();}}>

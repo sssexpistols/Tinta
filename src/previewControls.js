@@ -9,19 +9,22 @@ async function copyDiagram(svg){
  const clone=svg.cloneNode(true),box=svg.viewBox.baseVal,width=box.width||800,height=box.height||600;
  const scale=Math.min(2,4096/Math.max(width,height));clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width',String(width*scale));clone.setAttribute('height',String(height*scale));clone.removeAttribute('style');
  clone.style.setProperty('background','transparent','important');
+ clone.style.color=getComputedStyle(svg).color;
  const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml;charset=utf-8'}));
  try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=Math.ceil(width*scale);canvas.height=Math.ceil(height*scale);const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0,canvas.width,canvas.height);await window.tinta.copyImage(canvas.toDataURL('image/png'));}finally{URL.revokeObjectURL(url);}
 }
-function attachDiagram(figure,source,expand){
+function attachDiagram(figure,source,expand,kind='diagrama'){
  const svg=figure.querySelector('svg');if(!svg)return;
  figure.classList.add('interactive-diagram');const viewport=document.createElement('div');viewport.className='diagram-viewport';viewport.tabIndex=0;viewport.setAttribute('aria-label','Diagrama: arrastra para mover; + y − para zoom; 0 para restablecer');const box=svg.viewBox.baseVal;viewport.style.aspectRatio=`${box.width||800} / ${box.height||600}`;svg.before(viewport);viewport.append(svg);
  let zoom=1,x=0,y=0,drag=null;const controls=document.createElement('div');controls.className='diagram-navigation';const counter=document.createElement('output');counter.setAttribute('aria-label','Nivel de zoom');
  const paint=()=>{svg.style.transform=`translate(${x}px, ${y}px) scale(${zoom})`;counter.textContent=Math.round(zoom*100)+'%';};
  const change=factor=>{zoom=Math.min(4,Math.max(.25,zoom*factor));paint();};const reset=()=>{zoom=1;x=y=0;paint();};
  controls.append(button('Acercar diagrama','plus',()=>change(1.25)),button('Restablecer diagrama','reset',reset),button('Alejar diagrama','minus',()=>change(.8)),counter);
- if(expand)controls.append(button('Ampliar diagrama','expand',()=>expand(svg,source)));
+ if(expand)controls.append(button('Ampliar diagrama','expand',()=>expand(svg,source,kind)));
  const copy=document.createElement('div');copy.className='diagram-copy';copy.append(copyButton('Copiar Mermaid','source',()=>copyText(source)),copyButton('Copiar imagen del diagrama','copy',()=>copyDiagram(svg)));
  figure.append(copy,controls);paint();
+ if(kind!=='diagrama')for(const b of figure.querySelectorAll('button')){b.title=b.title.replace('Mermaid','fuente').replaceAll('del diagrama',kind==='fórmula'?'de la fórmula':'del gráfico').replaceAll('diagrama',kind);b.setAttribute('aria-label',b.title);}
+ viewport.setAttribute('aria-label',kind+': arrastra para mover; + y − para zoom; 0 para restablecer');
  viewport.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,startX:x,startY:y};viewport.setPointerCapture(e.pointerId);viewport.classList.add('is-dragging');});
  viewport.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;x=drag.startX+e.clientX-drag.x;y=drag.startY+e.clientY-drag.y;paint();});
  const end=()=>{drag=null;viewport.classList.remove('is-dragging');};viewport.addEventListener('pointerup',end);viewport.addEventListener('pointercancel',end);viewport.addEventListener('dblclick',reset);
@@ -30,14 +33,16 @@ function attachDiagram(figure,source,expand){
 }
 export function installPreviewControls(article,isCurrent){
  let dialog=null;
- function expand(svg,source){
-  if(dialog)return;const previous=document.activeElement;dialog=document.createElement('dialog');dialog.className='diagram-dialog';dialog.dataset.previewDialog='true';dialog.setAttribute('aria-label','Diagrama ampliado');
-  const heading=document.createElement('div');heading.className='diagram-dialog-heading';const title=document.createElement('strong');title.textContent='Diagrama';
+ function expand(svg,source,kind='diagrama'){
+  if(dialog)return;const previous=document.activeElement;dialog=document.createElement('dialog');dialog.className='diagram-dialog';dialog.dataset.previewDialog='true';dialog.setAttribute('aria-label',kind==='diagrama'?'Diagrama ampliado':kind==='fórmula'?'Fórmula ampliada':'Gráfico ampliado');
+  const heading=document.createElement('div');heading.className='diagram-dialog-heading';const title=document.createElement('strong');title.textContent=kind[0].toUpperCase()+kind.slice(1);
   const close=()=>{if(!dialog||dialog.classList.contains('is-closing'))return;const target=dialog;target.classList.add('is-closing');setTimeout(()=>{target.close();target.remove();if(dialog===target)dialog=null;previous?.isConnected&&previous.focus();},matchMedia('(prefers-reduced-motion:reduce)').matches?0:160);};
-  heading.append(title,button('Cerrar diagrama ampliado','close',close));const figure=document.createElement('figure');figure.className='mermaid-diagram';const clone=svg.cloneNode(true);clone.style.transform='';figure.append(clone);dialog.append(heading,figure);document.body.append(dialog);attachDiagram(figure,source);dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.addEventListener('click',e=>{if(e.target===dialog)close();});dialog.showModal();
+  heading.append(title,button('Cerrar diagrama ampliado','close',close));const figure=document.createElement('figure');figure.className='mermaid-diagram';const clone=svg.cloneNode(true);clone.style.transform='';figure.append(clone);dialog.append(heading,figure);document.body.append(dialog);attachDiagram(figure,source,null,kind);dialog.addEventListener('cancel',e=>{e.preventDefault();close();});dialog.addEventListener('click',e=>{if(e.target===dialog)close();});dialog.showModal();
  }
  for(const pre of article.querySelectorAll('pre.code-block')){const code=pre.querySelector('code');if(!code)continue;const parts=[...code.querySelectorAll('.code-source')];const source=parts.length?parts.map(part=>part.textContent).join('\n'):code.textContent;pre.classList.add('interactive-code');pre.append(copyButton('Copiar código','copy',()=>copyText(source)));}
  // Mermaid keeps the source outside SVG so copying never includes UI or line numbers.
- for(const figure of article.querySelectorAll('.mermaid-diagram'))if(isCurrent())attachDiagram(figure,figure.tintaSource||'',expand);
+ for(const figure of article.querySelectorAll('.mermaid-diagram,.science-figure'))if(isCurrent()){
+  attachDiagram(figure,figure.tintaSource||'',expand,figure.classList.contains('plot-figure')?'gráfico':figure.classList.contains('math-figure')?'fórmula':'diagrama');
+ }
  return ()=>{if(dialog){dialog.close();dialog.remove();dialog=null;}};
 }

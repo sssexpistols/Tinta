@@ -21,6 +21,9 @@ const store = new NoteStore(dataDirectory);
 const testPort=process.env.TINTA_TEST_MODE==='1'&&process.env.TINTA_DATA_DIR&&/^\d{4,5}$/.test(process.env.TINTA_OLLAMA_TEST_PORT||'')?Number(process.env.TINTA_OLLAMA_TEST_PORT):11434;
 const ollama = new (require('./ollama.cjs').OllamaService)(dataDirectory,{base:'http://127.0.0.1:'+testPort});
 const aiReady = ollama.load();
+const setup = new (require('./ai-setup.cjs').AiSetup)(ollama,dataDirectory);
+let updates;
+
 const entryPath = path.resolve(__dirname, '../dist/index.html');
 const entryUrl = pathToFileURL(entryPath).href;
 const testMode = process.env.TINTA_TEST_MODE === '1';
@@ -108,6 +111,15 @@ async function askCloseWithoutFlush() {
 function registerIpc() {
   handle('tinta:copy-image',data=>{if(typeof data!=='string'||!data.startsWith('data:image/png;base64,')||data.length>16*1024*1024)throw new Error('Imagen no válida.');const image=nativeImage.createFromDataURL(data);const size=image.getSize();if(image.isEmpty()||size.width>4096||size.height>4096)throw new Error('Imagen demasiado grande.');clipboard.writeImage(image);if(clipboard.readImage().isEmpty())throw new Error('No se pudo copiar la imagen.');return true;});
   handle('tinta:copy-text',text=>{if(typeof text!=='string'||text.length>65536)throw new Error('Texto para copiar no válido.');clipboard.writeText(text);if(clipboard.readText()!==text)throw new Error('No se pudo acceder al portapapeles. Inténtalo de nuevo.');return true;});
+  handle('tinta:ai-setup-status',async()=>{await aiReady;return setup.status();});
+  handle('tinta:ai-setup-requested',()=>setup.requested());
+  handle('tinta:ai-install-runtime',()=>{if(testMode)throw new Error('Instalación del sistema deshabilitada en pruebas.');void setup.installRuntime();return {started:true};});
+  handle('tinta:ai-pull-model',async model=>{await aiReady;if(!require('./ai-setup.cjs').MODELS.some(m=>m.name===model))throw new Error('Modelo no permitido.');if(['installing','downloading'].includes(setup.state.phase))throw new Error('Ya hay una instalación en curso.');void setup.pull(model);return {started:true};});
+  handle('tinta:ai-cancel-download',()=>setup.cancel());
+  handle('tinta:update-status',()=>updates.state);
+  handle('tinta:update-check',()=>updates.check());
+  handle('tinta:update-download',()=>updates.download());
+  handle('tinta:update-install',()=>updates.install(()=>store.flush(),()=>{closeApproved=true;}));
   handle('tinta:ai-config', async()=>{await aiReady;return ollama.config;});
   handle('tinta:ai-models', ()=>ollama.models());
   handle('tinta:ai-configure', async config=>{await aiReady;return ollama.configure(config);});
@@ -128,6 +140,9 @@ function registerIpc() {
   });
   handle('tinta:load', async () => { const state=await store.load(); await require('./upgrade.cjs').preserveUpgradeSnapshot(dataDirectory,state); return state; });
   handle('tinta:save', state => store.save(state));
+  handle('tinta:writing-defaults', async()=>{const {defaultWriting}=await import('../shared/writing.mjs');return defaultWriting(testMode?['en-US']:app.getPreferredSystemLanguages());});
+  handle('tinta:writing-config',async config=>{const {writingSettings}=await import('../shared/writing.mjs');const value=writingSettings(config);const supported=session.defaultSession.availableSpellCheckerLanguages;const languages=value.languages.map(x=>supported.includes(x)?x:x==='es-MX'&&supported.includes('es-ES')?'es-ES':'en-US');if(!testMode)session.defaultSession.setSpellCheckerLanguages(languages);session.defaultSession.setSpellCheckerEnabled(value.enabled);return value;});
+  handle('tinta:writing-review',async request=>{await aiReady;return ollama.reviewWriting(request);});
   handle('tinta:storage-status', () => store.getStatus());
   handle('tinta:window-state', windowState);
   handle('tinta:window-action', action => {
@@ -195,6 +210,13 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true, spellcheck: true, devTools: Boolean(devUrl) || testMode },
   });
   const contents = mainWindow.webContents;
+  contents.on('context-menu',(_event,params)=>{
+    if(!params.misspelledWord)return;
+    const items=params.dictionarySuggestions.slice(0,8).map(label=>({label,click:()=>contents.replaceMisspelling(label)}));
+    if(!items.length)items.push({label:'Sin alternativas ortográficas',enabled:false});
+    items.push({type:'separator'},{label:'Añadir palabra al diccionario',click:()=>contents.session.addWordToSpellCheckerDictionary(params.misspelledWord)});
+    Menu.buildFromTemplate(items).popup({window:mainWindow});
+  });
   contents.setWindowOpenHandler(({ url }) => { safeExternal(url); return { action: 'deny' }; });
   contents.on('will-navigate', (event, url) => { if (!isOwnUrl(url)) { event.preventDefault(); safeExternal(url); } });
   contents.on('will-redirect', (event, url) => { if (!isOwnUrl(url)) event.preventDefault(); });
@@ -212,7 +234,7 @@ function createWindow() {
     contents.send('tinta:before-close');
     closeTimer = setTimeout(() => void askCloseWithoutFlush(), 12000);
   });
-  mainWindow.on('closed', () => { ollama.cancel(); cancelClose(); mainWindow = null; });
+  mainWindow.on('closed', () => { setup.cancel(); ollama.cancel(); cancelClose(); mainWindow = null; });
   if (devUrl) void mainWindow.loadURL(devUrl.href);
   else void mainWindow.loadFile(entryPath);
 }
@@ -230,6 +252,9 @@ if (!app.requestSingleInstanceLock()) {
       const policy = `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'${devConnect}; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'`;
       callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [policy] } });
     });
+    const installed=app.isPackaged&&!testMode&&fs.existsSync(path.join(process.resourcesPath,'app-update.yml'));
+    updates=new (require('./updates.cjs').Updates)(installed?require('electron-updater').autoUpdater:null);
+    if(installed){const timer=setTimeout(()=>void updates.check(),15000);timer.unref();}
     registerIpc();
     createWindow();
   }).catch(error => { if (!testMode) dialog.showErrorBox('Tinta no pudo iniciar', error.message); app.exit(1); });

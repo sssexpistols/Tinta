@@ -1,74 +1,79 @@
-# Tinta 1.5.0 — plantillas completas y preview más práctico
+# Tinta
 
-Cierra normalmente la versión anterior y abre `Tinta-1.5.0-Windows/Tinta-win32-x64/Tinta.exe`. La esquina superior muestra **Tinta 1.5**. Conserva la carpeta completa o extrae el ZIP antes de abrirlo.
+Un cuaderno local para Windows: Markdown, Vim, notas enlazadas, plantillas de estudio y desarrollo, Mermaid, fórmulas y gráficos. La IA con Ollama es opcional.
 
-## Cambios de esta versión
+## Instalar y actualizar
 
-- **Plantillas y Papelera:** el editor Markdown carga el cuerpo correcto al cambiar de documento, también con Vim. Volver a una nota conserva su historial de deshacer.
-- **Preview de plantillas:** deja el ratón sobre una tarjeta unos instantes, en la biblioteca o en Ctrl+T. También aparece con foco de teclado. Puedes mover el ratón al preview y desplazarte por su contenido. Escape lo cierra. Ver el preview no selecciona, crea ni modifica notas.
-- **17 plantillas ampliadas:** cada estructura contiene preguntas guía, tablas, ejemplos o experimentos y un cierre adaptado a su propósito. Los ejemplos didácticos están identificados para que puedas reemplazarlos. Tus plantillas personales no se reescriben. Las notas que ya creaste desde una plantilla tampoco cambian.
-- **Vaciar papelera:** botón en el panel y opción al hacer clic derecho sobre Papelera (o Shift+F10). La confirmación indica el total, incluidas notas ocultas por la búsqueda. Cancelar no elimina nada. Confirmar elimina las notas de la colección; no es un borrado seguro de los snapshots o copias de seguridad existentes.
-- **PNG transparente:** Copiar imagen del diagrama conserva colores, figuras y texto del tema, con el exterior transparente. El fondo de la vista previa permanece igual. Algunos programas de destino pueden aplanar la transparencia al pegar; el PNG generado por Tinta contiene canal alfa.
-- **Código con ajuste de línea:** las líneas largas se ajustan al ancho de la vista previa, incluidos bloques numerados. El botón Copiar código conserva tabulaciones, espacios y saltos reales: no añade saltos visuales ni números de línea. Para aplicar automáticamente el formatter al pegar, activa esa opción en el editor de destino.
+Descarga **Tinta-Setup-1.6.0.exe** desde [Releases](https://github.com/sssexpistols/Tinta/releases). El instalador Windows x64 incluye el runtime: no necesitas Node.js, Python ni una distribución TeX.
 
-Las categorías son Estudio, Desarrollo, Investigación, Planning, Organización y Mis plantillas. Incluyen Cornell, sesiones de estudio, código limpio, patrones, despliegue, tareas, errores, decisiones de arquitectura, exploración del código, rendimiento, bloqueos, dependencias, lecturas, conceptos, planificación de funciones y refactoring.
+La opción **Configurar la IA local al abrir Tinta** abre un asistente después de instalar. Puedes omitirla y usar **Preferencias → Instalar IA en este equipo** cuando quieras. Ollama y sus modelos se descargan por separado. La app propone Qwen2.5 1.5B, 3B o 7B según la RAM; la velocidad también depende de CPU, GPU y memoria libre. Los modelos requieren aproximadamente 1–5 GB adicionales y la primera carga puede tardar.
 
-## Controles en la vista previa
+El instalador no tiene certificado de firma de código. Windows puede mostrar «Editor desconocido». Comprueba que la descarga provenga de este repositorio; no necesitas desactivar las protecciones de Windows.
 
-Los diagramas Mermaid tienen botones para **copiar su fuente**, **copiar una imagen PNG**, **acercar**, **alejar**, **restablecer** y **ampliar**. Arrastra el diagrama para desplazarte. Con el diagrama enfocado puedes usar `+`, `-`, `0` y las flechas; Ctrl+rueda ajusta el zoom. Escape cierra la vista ampliada y devuelve el foco al botón de apertura.
+En **Preferencias → Actualizaciones** puedes buscar, descargar y elegir **Guardar y reiniciar**. La app consulta las releases al abrir; no descarga automáticamente ni instala al cerrar sin tu elección. Cada release debe incluir el instalador, `.blockmap` y `latest.yml`. La instalación sustituye los archivos de la app y conserva los datos; las carpetas portátiles antiguas no se borran automáticamente.
 
-El botón **Copiar código** copia únicamente el contenido del bloque, sin filename, título ni números de línea. Los controles respetan el tema y no aparecen en las exportaciones HTML/PDF. La exportación conserva el diagrama completo, independientemente del zoom de la ventana.
+## Tus notas
 
-## Predicción de texto, código y Markdown
+Guardado automático en `%APPDATA%\Tinta`. Exporta una copia JSON desde Preferencias o una nota Markdown desde su menú. La exportación de vista previa ofrece HTML y PDF con elección de tema.
 
-La app distingue el bloque actual antes de limitar el contexto. En prosa excluye los bloques de código anteriores; dentro de un bloque usa su lenguaje y su contenido. Conserva el párrafo cercano, el título y el encabezado como orientación. También reconoce cercas dentro de citas y bloques largos.
+Se conserva el esquema de datos y se crea una copia previa `notes.before-v1.6.0.json` al actualizar. Cierra normalmente una versión portátil anterior antes de abrir la instalada. Las pruebas usan perfiles aislados.
 
-Al escribir una frase, intenta continuar esa frase. Para invitar una estructura, termina el párrafo con una indicación y deja una línea vacía, por ejemplo:
+- Libretas, etiquetas con Enter, favoritos, estados, búsqueda y papelera con confirmación al vaciar.
+- `[[Título de otra nota]]` enlaza o crea una nota, incluso con espacios. Las referencias entrantes aparecen en preview.
+- Plantillas por categorías y preview al pasar el ratón. **Ctrl+T** aplica una plantilla cuando la nota está vacía.
+- Temas oscuro, claro y Gruvbox; Vim y números relativos opcionales. Atajos personalizables.
+- **Ctrl+N** nueva nota, **Ctrl+B** negrita, **Ctrl+I** cursiva, **Ctrl+S** guardar, **Ctrl+K** buscar y abrir; disponibles también en Vim insertar y visual.
+- `/` ofrece bloques de tabla, tarea, código, fórmula, gráfico y regresión, entre otros.
 
-- `Los pasos para preparar un commit son:` → lista.
-- `Un ejemplo de este comando:` → ejemplo en Markdown.
-- `Este diagrama muestra editar archivos, preparar cambios con git add y registrar con git commit:` → bloque Mermaid.
+## Corrección de escritura
 
-**Tab** acepta y **Esc** descarta. Aceptar ya no inicia una cadena de nuevas peticiones: la siguiente sugerencia espera una nueva edición. Se filtran respuestas de código fuera de contexto, duplicados y repeticiones del prefijo. Una respuesta descartada no aparece ni modifica la nota.
+La configuración inicial usa **Español (MX)** si el idioma preferido de Windows es `es-MX`; en otro caso usa **English (US)**. Puedes activar ambos simultáneamente o desactivar la función.
 
-Se seleccionó **qwen2.5:7b** para este equipo, tras compararlo con qwen2.5-coder:3b usando ejemplos ficticios de español, Git, SQL y Mermaid. El modelo anterior permanece instalado y puede elegirse en Preferencias. La descarga ocupa unos 4,7 GB; la generación utiliza exclusivamente el servidor local. Hermes no se modificó.
+**Revisar escritura**, en la barra del editor, ofrece cambios para aceptar individualmente. Las reglas locales incluyen `o oprimir → u oprimir`, repeticiones y algunos artículos ingleses. La revisión adicional con Ollama admite hasta 12.000 caracteres. Se excluyen código y fórmulas; no se reescribe automáticamente la nota. El menú contextual ofrece ortografía cuando el diccionario de Electron está disponible. La cobertura es limitada; no detectar problemas no garantiza un texto correcto.
 
-En la comparación, las consultas del modelo cargado tardaron aproximadamente 0,3–0,8 segundos; la primera carga tardó más. La app añade una pausa de escritura antes de consultar. Son observaciones, no garantías. Los modelos pueden equivocarse: revisa las afirmaciones, el código y los diagramas antes de aceptar.
+## Matemáticas, química y gráficos
 
-Referencia del modelo: [Qwen2.5 en Ollama](https://ollama.com/library/qwen2.5).
+Usa `$E=mc^2$` dentro de un párrafo, `$$...$$` en bloque o cercas `math`, `latex` y `tex`:
 
-## Atajos y Vim
+```math
+E_k=\frac12 mv^2,\qquad \ce{2H2 + O2 -> 2H2O}
+```
 
-Los atajos de la app tienen prioridad sobre Vim. **Ctrl+N crea una nota desde el editor también en insertar y visual.** Los comandos normales de Vim siguen disponibles; Ctrl+N/P dejan de estar reservados para el autocompletado de Vim porque se usan para acciones de Tinta.
+MathJax renderiza notación matemática y química `mhchem` localmente. No compila documentos LaTeX completos ni ejecuta comandos, paquetes arbitrarios o archivos externos.
 
-Los comandos de Markdown actúan cuando el editor tiene el foco. Ahora también aparecen en **Preferencias → Personalizar atajos de teclado**. Puedes cambiar sus combinaciones y restablecerlas. Si un nuevo atajo coincide con una combinación personalizada de la versión 1.3, se conserva la combinación antigua y se asigna otra disponible al nuevo comando.
+Los bloques `plot` usan JSON. Regresión con datos **didácticos**:
 
-| Acción | Teclas iniciales |
-| --- | --- |
-| Negrita / cursiva | Ctrl+B / Ctrl+I |
-| Tachado | Ctrl+Shift+X |
-| Enlace | Ctrl+Shift+K |
-| Código en línea / bloque | Ctrl+E / Ctrl+Shift+C |
-| Lista de tareas | Ctrl+Alt+T |
-| Viñetas / lista numerada | Ctrl+Alt+L / Ctrl+Alt+O |
-| Cita | Ctrl+Alt+Q |
-| Tabla / separador | Ctrl+Alt+B / Ctrl+Alt+R |
-| Encabezados 1–6 | Ctrl+Alt+1…6 |
-| Buscar en la nota | Ctrl+F |
-| Deshacer / rehacer | Ctrl+Z / Ctrl+Y; Ctrl+Shift+Z también rehace |
-| Nueva nota / guardar | Ctrl+N / Ctrl+S |
-| Buscar y abrir nota | Ctrl+K; Ctrl+P conserva su alias si está libre |
-| Plantilla en nota vacía | Ctrl+T |
-| Preferencias | Ctrl+, |
+```plot
+{"title":"Regresión lineal","points":[[0,1],[1,3],[2,5]],"regression":"linear"}
+```
 
-Las combinaciones de diferentes editores no son idénticas: Tinta mantiene Ctrl+K para buscar notas y Ctrl+Shift+K para enlaces. Se pueden personalizar. Las operaciones de formato envuelven el texto seleccionado o insertan un campo de ejemplo si no hay selección; no activan un modo de texto enriquecido permanente.
+Funciones de una variable:
 
-## Datos, desarrollo y versiones
+```plot
+{"title":"Funciones","x":[-5,5],"y":[-2,8],"functions":["x^2","sin(x)"]}
+```
 
-Se conserva el esquema 1 y la misma colección local. Al abrir una colección existente se crea `notes.before-v1.5.0.json` una sola vez antes de los guardados de esta versión. No reemplaza snapshots anteriores. Las pruebas utilizan perfiles separados, nunca las notas personales.
+Admite `x`, `pi`, `e`, `+ - * / ^`, paréntesis y `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sqrt`, `abs`, `exp`, `log`, `ln`, `log10`, `floor`, `ceil`. Multiplicación explícita: `2*x`. La regresión calcula pendiente, intercepto y R²; comprueba unidades, supuestos y significado de los datos. No es un sistema algebraico simbólico. La plantilla **Modelo matemático y regresión** guía el proceso.
 
-La configuración local de Ollama se mantiene; esta entrega no cambia ni descarga modelos. No modifica la integración de IA, sus filtros de contexto ni los atajos de la versión 1.4.
+Las fórmulas en bloque, gráficos y Mermaid tienen controles para ampliar, mover, restablecer, copiar fuente y copiar PNG transparente con los colores del tema. El programa donde pegues puede aplanar la transparencia. HTML/PDF conserva los recursos sin botones. El código ajusta sus líneas al ancho y se copia con espacios y saltos originales; el formatter al pegar lo configura el editor de destino.
 
-Desarrollo en `feat/templates-trash-preview-fixes`, worktree separado, merge local probado a `main` y etiqueta `v1.5.0`. No se publica a un remoto. Los ejecutables anteriores siguen disponibles. Evita abrir simultáneamente dos versiones sobre la misma colección: se detectan escrituras externas para impedir sobrescrituras.
+## Predicción local
 
-El ZIP de código contiene la versión etiquetada y el archivo `.bundle` conserva el historial Git. Para desarrollar: `npm ci`, `npm run build`, `npm test`. La suite nueva se ejecuta con `npm run test:desktop:v15` y crea su propio perfil aislado. Consulta `VERIFICATION.md` para conocer las pruebas realizadas y sus límites.
+Tinta solo consulta Ollama en `127.0.0.1:11434` y rechaza los modelos de nube. Usa el contexto cercano al cursor; en prosa excluye bloques de código ajenos. **Tab** acepta y **Esc** descarta. Mover el cursor, abrir una nota o aceptar una sugerencia no inicia otra petición. Se descartan duplicados del texto que ya existe después del cursor.
+
+Para invitar una estructura, termina un párrafo descriptivo con «Los pasos son:», «Este diagrama muestra…», «La fórmula de…» o «Gráfico de…», seguido de una línea vacía. Revisa el resultado: el modelo puede equivocarse, tardar o no producir una continuación utilizable. No se garantiza corrección gramatical, científica ni del código.
+
+## Desarrollo y releases
+
+```powershell
+npm ci
+npm test
+npm run build
+npm start
+```
+
+Usa ramas y una carpeta aislada: `$env:TINTA_DATA_DIR = "$pwd\.test-results\manual"`. No pruebes sobre notas personales. Las suites `npm run test:desktop` y `npm run test:desktop:v11` hasta `:v16` crean sus propios perfiles.
+
+`npm run installer` genera NSIS en `.build/release`. Solo empaqueta el frontend compilado y las dependencias necesarias de escritorio. El workflow de GitHub prueba y construye al subir una etiqueta `v*`; publica únicamente si los pasos pasan. Incrementa la versión, el lockfile y las notas de release antes de etiquetar. No incluyas modelos, notas personales ni cachés en Git.
+
+Consulta [CHANGELOG.md](CHANGELOG.md), [VERIFICATION.md](VERIFICATION.md) y [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

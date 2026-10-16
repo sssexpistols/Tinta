@@ -1,0 +1,74 @@
+name: Build and release Tinta
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Desktop regression tests
+        shell: pwsh
+        run: |
+          $env:TINTA_ELECTRON_PATH = Join-Path $pwd 'node_modules/electron/dist/electron.exe'
+          foreach ($suite in @('desktop','desktop-v11','desktop-v12','desktop-v13','desktop-v14','desktop-v15','desktop-v16')) {
+            node "tests/$suite.cjs"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - run: npm run installer
+      - name: Test packaged application
+        shell: pwsh
+        run: |
+          $env:TINTA_ELECTRON_PATH = Join-Path $pwd '.build/release/win-unpacked/Tinta.exe'
+          $env:TINTA_PACKAGED = '1'
+          node tests/desktop-v16.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test installer in an isolated directory
+        shell: pwsh
+        run: |
+          $target = Join-Path $pwd '.test-installed'
+          $setup = Get-ChildItem '.build/release/Tinta-Setup-*.exe' | Select-Object -First 1
+          $env:TINTA_DATA_DIR = Join-Path $pwd '.test-results/installer-profile'
+          $env:TINTA_TEST_MODE = '1'
+          $process = Start-Process -FilePath $setup.FullName -ArgumentList '/S', "/D=$target" -Wait -PassThru -WindowStyle Hidden
+          if ($process.ExitCode -ne 0) { throw "Installer exited with $($process.ExitCode)" }
+          if (!(Test-Path "$target/Tinta.exe")) { throw 'Installed executable missing' }
+          $env:TINTA_ELECTRON_PATH = Join-Path $target 'Tinta.exe'
+          $env:TINTA_PACKAGED = '1'
+          node tests/desktop-v16.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tinta-Windows
+          path: |
+            .build/release/Tinta-Setup-*.exe
+            .build/release/Tinta-Setup-*.exe.blockmap
+            .build/release/latest.yml
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Tinta-Windows
+          path: release
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --title "Tinta ${GITHUB_REF_NAME#v}" --notes-file RELEASE-NOTES.md

@@ -18,6 +18,18 @@ ipcRenderer.on('tinta:before-close', async () => {
 
 contextBridge.exposeInMainWorld('tinta', Object.freeze({
   platform: process.platform,
+  aiSetupStatus: () => ipcRenderer.invoke('tinta:ai-setup-status'),
+  aiSetupRequested: () => ipcRenderer.invoke('tinta:ai-setup-requested'),
+  aiInstallRuntime: () => ipcRenderer.invoke('tinta:ai-install-runtime'),
+  aiPullModel: model => ipcRenderer.invoke('tinta:ai-pull-model',model),
+  aiCancelDownload: () => ipcRenderer.invoke('tinta:ai-cancel-download'),
+  updateStatus: () => ipcRenderer.invoke('tinta:update-status'),
+  checkUpdates: () => ipcRenderer.invoke('tinta:update-check'),
+  downloadUpdate: () => ipcRenderer.invoke('tinta:update-download'),
+  installUpdate: () => ipcRenderer.invoke('tinta:update-install'),
+  writingDefaults: () => ipcRenderer.invoke('tinta:writing-defaults'),
+  configureWriting: config => ipcRenderer.invoke('tinta:writing-config',config),
+  reviewWriting: request => ipcRenderer.invoke('tinta:writing-review',request),
   copyImage: data => ipcRenderer.invoke('tinta:copy-image',data),
   copyText: text => ipcRenderer.invoke('tinta:copy-text',text),
   load: () => ipcRenderer.invoke('tinta:load'),
