@@ -1,0 +1,102 @@
+.markdown-editor { flex: 1; height: 100%; min-height: 0; min-width: 0; background: var(--bg-editor, #101112); }
+.markdown-editor .cm-editor { height: 100%; }
+.markdown-editor .cm-content { tab-size: 2; }
+.markdown-editor .cm-editor .cm-gutters { background: var(--bg-editor, #101112); color: var(--muted, #777d87); border-right: 1px solid var(--border, #303139); font-size: 11px; min-width: 39px; user-select: none; }
+.markdown-editor .cm-lineNumbers .cm-gutterElement { padding: 0 10px 0 7px; min-width: 36px; text-align: right; }
+.markdown-editor .cm-editor .cm-activeLineGutter { background: color-mix(in srgb, var(--accent, #a196ed) 7%, transparent); }
+.markdown-editor .cm-currentLineNumber { color: var(--accent, #a196ed); font-weight: 600; }
+.markdown-editor .cm-editor .cm-activeLine { background: color-mix(in srgb, var(--muted, #858894) 8%, transparent); }
+.markdown-editor .cm-editor[data-vim-mode] .cm-line { padding-left: 12px; }
+.markdown-editor .cm-editor .cm-fat-cursor { background: var(--accent, #a196ed); color: var(--bg-editor, #101112) !important; border-radius: 1px; }
+.markdown-editor .cm-editor:not(.cm-focused) .cm-fat-cursor { background: transparent; outline-color: var(--accent, #a196ed); color: transparent !important; }
+.markdown-editor .cm-editor .cm-vim-panel { padding: 5px 12px; min-height: 26px; font: 12px/1.6 'Cascadia Code', Consolas, monospace; color: var(--accent, #a196ed); }
+.markdown-editor .cm-editor .cm-vim-panel input { color: var(--text); font: inherit; caret-color: var(--accent); }
+.markdown-editor .cm-editor .cm-wiki-link { color: var(--wiki-link, #78b7ee); cursor: pointer; text-decoration: none; border-radius: 2px; transition: background-color 120ms ease, color 120ms ease; }
+.markdown-editor .cm-editor .cm-wiki-link:hover { background: color-mix(in srgb, var(--wiki-link, #78b7ee) 14%, transparent); }
+.markdown-editor .cm-editor .cm-wiki-missing { color: var(--muted, #858894); text-decoration: underline dashed; text-underline-offset: 3px; }
+.markdown-editor .cm-search { padding: 9px 35px 9px 12px; font: 12px/1.7 'Segoe UI', sans-serif; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.markdown-editor .cm-search label { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.markdown-editor .cm-search input[type=checkbox] { accent-color: var(--accent, #a196ed); }
+.markdown-editor .cm-textfield { background: var(--bg-editor, #101112); color: var(--text, #d8d9df); border: 1px solid var(--border, #303139); border-radius: 5px; padding: 5px 8px; outline: none; min-width: 120px; }
+.markdown-editor .cm-textfield:focus { border-color: var(--accent, #a196ed); }
+.markdown-editor .cm-button { background: var(--panel, #23242a); color: var(--text, #d8d9df); border: 1px solid var(--border, #303139); border-radius: 5px; padding: 4px 9px; font: inherit; cursor: pointer; }
+.markdown-editor .cm-button:hover { border-color: var(--accent, #a196ed); }
+.markdown-editor .cm-search button[name=close] { color: var(--muted); top: 9px; right: 10px; background: transparent; border: 0; font-size: 17px; cursor: pointer; }
+.markdown-editor .cm-tooltip-autocomplete { animation: editor-pop-in 110ms ease-out; }
+.markdown-editor .cm-tooltip.cm-completionInfo { padding: 8px 12px; font-size: 12px; color: var(--muted); }
+.markdown-editor .cm-snippetField { background: color-mix(in srgb, var(--accent, #a196ed) 15%, transparent); border-bottom: 1px solid var(--accent, #a196ed); }
+.markdown-preview { flex: 1; height: 100%; min-height: 0; min-width: 0; overflow: auto; padding: 22px 0 140px; color: var(--text, #d8d9df); background: var(--bg-editor, #101112); font: 15px/1.8 'Segoe UI', system-ui, sans-serif; overflow-wrap: anywhere; }
+.markdown-preview .markdown-body { max-width: 100%; margin: 0 auto; }
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 { color: var(--text, #e3e3e8); font-weight: 650; line-height: 1.35; margin: 1.3em 0 .6em; letter-spacing: -.025em; }
+.markdown-body h1 { font-size: 2em; border-bottom: 1px solid var(--border, #2b2c30); padding-bottom: .3em; }
+.markdown-body h2 { font-size: 1.55em; border-bottom: 1px solid var(--border, #2b2c30); padding-bottom: .3em; }
+.markdown-body h3 { font-size: 1.28em; }
+.markdown-body h4 { font-size: 1.12em; }
+.markdown-body h5, .markdown-body h6 { font-size: 1em; }
+.markdown-body p { margin: 0 0 1em; }
+.markdown-body strong { font-weight: 650; color: var(--text); }
+.markdown-body a { color: var(--accent, #a99cf5); text-decoration: none; text-underline-offset: 3px; cursor: pointer; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.markdown-body .wiki-link { padding: 1px 4px; border-radius: 4px; background: color-mix(in srgb, var(--accent, #a99cf5) 12%, transparent); }
+.markdown-body .wiki-link.missing { color: var(--muted, #858894); border-bottom: 1px dashed currentColor; cursor: default; background: transparent; }
+.markdown-body blockquote { margin: 1em 0; padding: 3px 16px; border-left: 3px solid var(--accent, #a99cf5); color: var(--muted, #a0a3ac); background: color-mix(in srgb, var(--accent, #a99cf5) 5%, transparent); border-radius: 0 6px 6px 0; }
+.markdown-body blockquote > :last-child { margin-bottom: 0; }
+.markdown-body ul, .markdown-body ol { padding-left: 1.7em; margin: .5em 0 1em; }
+.markdown-body li > p { margin-bottom: .5em; }
+.markdown-body li > ul, .markdown-body li > ol { margin-bottom: .4em; }
+.markdown-body li:has(> .markdown-task), .markdown-body li:has(> p > .markdown-task) { list-style-type: none; margin-left: -1.25em; }
+.markdown-body .markdown-task { width: 14px; height: 14px; margin: 0 7px 0 0; vertical-align: -.12em; accent-color: var(--accent, #a196ed); cursor: pointer; }
+.markdown-body .markdown-task:checked { opacity: .8; }
+.markdown-body .markdown-task:disabled { cursor: default; }
+.markdown-body li:has(> .markdown-task:checked), .markdown-body li:has(> p > .markdown-task:checked) { color: var(--muted, #858894); }
+.markdown-body hr { height: 1px; border: 0; background: var(--border, #2b2c30); margin: 1.8em 0; }
+.markdown-body code { font-family: 'Cascadia Code', 'Consolas', 'SFMono-Regular', monospace; font-size: .87em; background: color-mix(in srgb, var(--muted, #999) 11%, transparent); padding: .15em .38em; border-radius: 4px; color: var(--syntax-string, #a6d5ad); }
+.markdown-body pre { position: relative; margin: 1.2em 0; padding: 16px 18px; background: var(--bg-code, #17181c); border: 1px solid var(--border, #303139); border-radius: 8px; overflow: auto; line-height: 1.7; tab-size: 2; }
+.markdown-body pre[data-language] { padding-top: 32px; }
+.markdown-body pre[data-language]::before { content: attr(data-language); position: absolute; top: 7px; left: 18px; font: 10px/1.4 'Segoe UI', sans-serif; color: var(--muted, #858894); text-transform: uppercase; letter-spacing: .08em; }
+.markdown-body pre code { display: block; color: var(--text, #d9dce2); background: transparent; padding: 0; border-radius: 0; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.markdown-body table { border-collapse: collapse; border-spacing: 0; max-width: 100%; width: max-content; display: block; overflow-x: auto; margin: 1em 0 1.4em; font-size: .92em; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--border, #35373f); padding: 7px 13px; text-align: left; min-width: 70px; }
+.markdown-body th { background: color-mix(in srgb, var(--muted, #999) 14%, transparent); font-weight: 650; }
+.markdown-body td { background: color-mix(in srgb, var(--muted, #999) 5%, transparent); }
+.markdown-body tr:nth-child(2n) td { background: color-mix(in srgb, var(--muted, #999) 8%, transparent); }
+.markdown-body img { max-width: 100%; height: auto; border-radius: 7px; }
+.markdown-body details { border: 1px solid var(--border); border-radius: 7px; padding: 9px 14px; margin: 1em 0; }
+.markdown-body summary { cursor: pointer; color: var(--text); }
+.markdown-body kbd { display: inline-block; padding: 1px 5px; font: 11px/1.7 'Consolas', monospace; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; }
+.markdown-body .hljs-comment, .markdown-body .hljs-quote { color: var(--muted, #7c8290); font-style: italic; }
+.markdown-body .hljs-keyword, .markdown-body .hljs-selector-tag, .markdown-body .hljs-literal, .markdown-body .hljs-built_in, .markdown-body .hljs-name { color: var(--syntax-heading, #ed6fbb); }
+.markdown-body .hljs-string, .markdown-body .hljs-regexp, .markdown-body .hljs-addition, .markdown-body .hljs-attribute { color: var(--syntax-string, #a6d5ad); }
+.markdown-body .hljs-number, .markdown-body .hljs-symbol, .markdown-body .hljs-bullet, .markdown-body .hljs-variable, .markdown-body .hljs-template-variable { color: var(--syntax-number, #e6b679); }
+.markdown-body .hljs-title, .markdown-body .hljs-type, .markdown-body .hljs-section, .markdown-body .hljs-attr { color: var(--syntax-punctuation, #78b7ee); }
+.markdown-body .hljs-meta, .markdown-body .hljs-deletion { color: #df8d99; }
+.markdown-body .hljs-emphasis { font-style: italic; }
+.markdown-body .hljs-strong { font-weight: 700; }
+.preview-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 250px; color: var(--muted, #858894); text-align: center; }
+.preview-empty span { font-size: 16px; }
+.preview-empty small { font-size: 12px; opacity: .7; }
+@keyframes editor-pop-in { from { transform: translateY(-3px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .markdown-editor .cm-tooltip-autocomplete { animation: none; } .markdown-editor .cm-editor .cm-cursorLayer { animation: none !important; } .markdown-editor .cm-editor .cm-wiki-link { transition: none; } }
+:root[data-theme=light] { --syntax-heading: #a9267c; --syntax-punctuation: #286fac; --syntax-string: #3a7750; --syntax-number: #98651d; --bg-code: #f3f3f7; --editor-selection: #8e7dd52b; }
+.markdown-editor .cm-focused .cm-cursorLayer { animation: tinta-cursor-breathe 1.25s ease-in-out infinite !important; }
+.markdown-editor .cm-editor:not(.cm-focused) .cm-cursorLayer { animation: none !important; }
+.markdown-editor .ai-ghost { color:var(--muted);opacity:.65;white-space:pre-wrap;pointer-events:none;font-style:italic; }
+.markdown-body pre { transition:border-color .2s ease,background-color .2s ease; }
+.markdown-body pre:hover { border-color:color-mix(in srgb,var(--accent) 30%,var(--border)); }
+:root[data-theme=gruvbox] .markdown-body .hljs-title { color:#8ec07c; }
+:root[data-theme=gruvbox] .markdown-body .hljs-string { color:#b8bb26; }
+@keyframes tinta-cursor-breathe { 0%,20%,100% { opacity:1; } 55%,70% { opacity:.12; } }
+@media (prefers-reduced-motion:reduce) { .markdown-editor .cm-focused .cm-cursorLayer { animation:none !important;opacity:1; } .markdown-body pre { transition:none; } }
+
+.markdown-body .code-with-file{margin:1.2em 0;border:1px solid var(--border);border-radius:8px;overflow:hidden}.markdown-body .code-file-header{background:color-mix(in srgb,var(--muted) 8%,var(--bg-code));padding:10px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:3px;font:11px/1.5 'Segoe UI',sans-serif;color:var(--muted)}.markdown-body .code-file-header b{font-weight:500;color:var(--text)}.markdown-body .code-filename{color:var(--syntax-punctuation);overflow-wrap:anywhere}.markdown-body .code-with-file pre{margin:0;border:0;border-radius:0}.markdown-body pre code.has-line-numbers{display:flex;gap:16px}.code-line-numbers{color:var(--syntax-punctuation);opacity:.7;text-align:right;user-select:none;flex-shrink:0}.code-source{min-width:0}.markdown-body .mermaid-diagram{margin:1.2em 0;padding:20px 16px;background-color:var(--bg-code);background-image:radial-gradient(var(--border) .8px,transparent .8px);background-size:16px 16px;border:1px solid var(--border);border-radius:8px;overflow:auto;text-align:center}.mermaid-diagram svg{max-width:100%;height:auto;min-width:240px}.diagram-error{font-size:12px;color:var(--danger);border:1px solid var(--border);padding:12px;border-radius:7px;margin-top:15px}.mermaid-source{font:12px/1.7 Consolas,monospace;white-space:pre-wrap}.markdown-body .mermaid-diagram .label{font-family:'Segoe UI',sans-serif}
+
+.markdown-body .mermaid-diagram svg{width:100%;height:auto;max-height:420px;min-width:0}.markdown-body .mermaid-diagram{break-inside:avoid}
+
+/* Each source row owns its gutter, so wrapped lines keep their number aligned. */
+.markdown-body pre code.has-line-numbers{display:block}
+.markdown-body .code-row{display:grid;grid-template-columns:minmax(3ch,max-content) minmax(0,1fr);column-gap:16px;min-height:1.7em}
+.markdown-body .code-row .code-line-numbers{white-space:pre;align-self:start}
+.markdown-body .code-source{white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
+.note-context-menu button:disabled{opacity:.45;cursor:default}

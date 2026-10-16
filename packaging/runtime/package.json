@@ -1,0 +1,9 @@
+{
+  "name": "tinta",
+  "version": "1.6.0",
+  "description": "Tu cuaderno local de Markdown, código y ciencia",
+  "author": "sssexpistols",
+  "main": "electron/main.cjs",
+  "private": true,
+  "dependencies": { "electron-updater": "6.8.9" }
+}

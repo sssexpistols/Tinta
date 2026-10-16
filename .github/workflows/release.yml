@@ -1,0 +1,75 @@
+name: Build and release Tinta
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the tested version as a GitHub release'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - name: Install the pinned Electron runtime
+        run: node node_modules/electron/install.js
+      - run: npm test
+      - run: npm run build
+      - name: Desktop regression tests
+        shell: pwsh
+        run: |
+          $env:TINTA_ELECTRON_PATH = Join-Path $pwd 'node_modules/electron/dist/electron.exe'
+          foreach ($suite in @('desktop','desktop-v11','desktop-v12','desktop-v13','desktop-v14','desktop-v15','desktop-v16')) {
+            node "tests/$suite.cjs"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+      - run: npm run installer
+      - name: Test packaged application
+        shell: pwsh
+        run: |
+          $env:TINTA_ELECTRON_PATH = Join-Path $pwd '.build/release/win-unpacked/Tinta.exe'
+          $env:TINTA_PACKAGED = '1'
+          node tests/desktop-v16.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test installer in an isolated directory
+        shell: pwsh
+        run: |
+          $target = Join-Path $pwd '.test-installed/Tinta'
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $setup = Join-Path $pwd ".build/release/Tinta-Setup-$version.exe"
+          if (!(Test-Path $setup)) { throw 'Setup executable missing' }
+          $env:TINTA_DATA_DIR = Join-Path $pwd '.test-results/installer-profile'
+          $env:TINTA_TEST_MODE = '1'
+          $process = Start-Process -FilePath $setup -ArgumentList '/S', "/D=$target" -Wait -PassThru -WindowStyle Hidden
+          if ($process.ExitCode -ne 0) { throw "Installer exited with $($process.ExitCode)" }
+          if (!(Test-Path "$target/Tinta.exe")) { throw 'Installed executable missing' }
+          $env:TINTA_ELECTRON_PATH = Join-Path $target 'Tinta.exe'
+          $env:TINTA_PACKAGED = '1'
+          node tests/desktop-v16.cjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          if [[ "$GITHUB_REF" == refs/tags/* && "$GITHUB_REF_NAME" != "$TAG" ]]; then
+            echo 'Tag does not match package version'; exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refusing to replace published assets"; exit 1
+          fi
+          gh release create "$TAG" ".build/release/Tinta-Setup-$VERSION.exe" ".build/release/Tinta-Setup-$VERSION.exe.blockmap" .build/release/latest.yml --target "$GITHUB_SHA" --title "Tinta $VERSION" --notes-file RELEASE-NOTES.md

@@ -1,0 +1,10 @@
+import React,{useEffect,useMemo,useState} from 'react';
+import {grammarSuggestions,aiCorrections} from '../shared/writing.mjs';
+export default function WritingReview({note,settings,onApply,api}){
+ const [extra,setExtra]=useState([]),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const local=useMemo(()=>grammarSuggestions(note.body,settings),[note.body,settings]);
+ useEffect(()=>{setExtra([]);},[note.body]);
+ const suggestions=[...local,...extra.filter(x=>!local.some(y=>y.from<x.to&&x.from<y.to))];
+ async function review(){setBusy(true);setMessage('Revisando localmente…');const snapshot=note.body;try{const result=await api.reviewWriting({text:snapshot,languages:settings.languages});setExtra(aiCorrections(snapshot,result.text));setMessage('Revisión local terminada. Comprueba cada cambio antes de aplicarlo.');}catch(e){setMessage(e.message);}finally{setBusy(false);}}
+ return <><h2>Revisar escritura</h2><p className="modal-description">{settings.languages.join(' + ')} · Las reglas detectan algunos errores comunes. Ollama puede revisar más casos; sus sugerencias también pueden equivocarse.</p><button className="secondary-button" disabled={busy||note.body.length>12000} onClick={review}>{busy?'Revisando…':'Revisar gramática con Ollama'}</button>{note.body.length>12000&&<p className="modal-description">La revisión con IA admite hasta 12.000 caracteres por nota.</p>}<p role="status" className="modal-description">{message}</p><div className="writing-suggestions">{suggestions.map((s,i)=><div className="writing-suggestion" key={i}><small>{s.source}</small><p><del>{s.before}</del> → <strong>{s.after}</strong></p><p>{s.reason}</p><button disabled={busy} className="secondary-button" onClick={()=>{if(note.body.slice(s.from,s.to)===s.before){onApply(note.body.slice(0,s.from)+s.after+note.body.slice(s.to));setExtra([]);}}}>Aplicar corrección</button></div>)}{!suggestions.length&&!busy&&<p className="modal-description">Sin sugerencias detectadas. Esto no garantiza que el texto esté libre de errores.</p>}</div></>;
+}
