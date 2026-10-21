@@ -1,0 +1,15 @@
+.markdown-body mark{background:var(--accent-soft);color:var(--text);padding:.08em .2em;border-radius:3px;box-shadow:inset 0 -2px color-mix(in srgb,var(--accent) 65%,transparent)}
+.markdown-body u{text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:4px}
+.markdown-body .study-callout{margin:1.2em 0;padding:14px 18px;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
+.markdown-body .callout-title{font-weight:650;color:var(--accent);margin-bottom:6px}.markdown-body .study-callout>:last-child{margin-bottom:0}
+.markdown-body .callout-warning{border-left-color:#e9ac58}.markdown-body .callout-question{border-left-color:#50b9b0}
+.markdown-body .footnotes{font-size:.88em;margin-top:2.2em}.markdown-body .footnotes li{scroll-margin-top:16px}.markdown-body .footnotes p{display:inline}.footnote-ref{scroll-margin-top:16px}.footnote-back{margin-left:8px}
+.study-library{width:100%}.study-library-search{width:100%;margin:10px 0 14px;padding:10px 12px;background:var(--bg-editor);color:var(--text);border:1px solid var(--border);border-radius:7px}
+.study-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.study-tabs button{padding:6px 9px;border:1px solid var(--border);border-radius:6px;color:var(--muted)}
+.study-tabs button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.study-resource-list{display:grid;gap:9px;max-height:49vh;overflow:auto;padding:2px 5px 6px 0}
+.study-resource{padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-editor)}
+.study-resource header{display:flex;justify-content:space-between;gap:12px;align-items:center}.study-resource small{display:block;color:var(--muted);margin-top:6px;line-height:1.6}
+.study-resource pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 Consolas,monospace;color:var(--syntax-punctuation);margin:10px 0 0;max-height:160px;overflow:auto}
+.format-toolbar{flex-wrap:wrap;min-height:36px;height:auto;row-gap:2px}.format-toolbar .editor-hint{white-space:nowrap}
+.import-help{font-size:11px;color:var(--muted)}

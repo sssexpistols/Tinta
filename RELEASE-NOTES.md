@@ -1,14 +1,12 @@
-## Tinta 1.6.0
+# Tinta 1.7.0
 
-- Corrige sugerencias repetidas tras aceptar y mover el cursor; rechaza duplicados del texto existente.
-- Corrección English-US y Español-MX, ambos simultáneos si lo prefieres. Reglas locales y revisión opcional con Ollama; cambios aceptados individualmente.
-- LaTeX, química con mhchem, gráficos de funciones y regresión lineal con R². Controles en preview y PNG transparente.
-- Plantilla de modelos matemáticos; `/formula`, `/grafico` y `/regresion`.
-- Instalador Windows x64, IA opcional y descarga/configuración desde Preferencias.
-- Actualizaciones desde GitHub, con descarga y reinicio elegidos por el usuario y guardado previo de notas.
+- Diagramas: fuente consistente durante el cálculo y la visualización, ajuste de etiquetas y mensajes y área SVG que conserva los títulos y leyendas largos. Zoom, ampliación y copia PNG transparente se mantienen.
+- Abrir Markdown con Ctrl+O, arrastrar archivos o «Abrir con Tinta» desde Windows, incluso con la app abierta. Se guarda una copia editable en la colección; el archivo original permanece intacto.
+- Subrayado, resaltado, superíndice, subíndice, notas al pie navegables, recuadros y preguntas de repaso plegables. Atajos personalizables con respeto a los anteriores.
+- Biblioteca de recursos para apuntes (Ctrl+Shift+M): fórmulas, matrices, sistemas, cálculo, física, química, citas y glosario. Nuevas plantillas de análisis literario y ensayo argumentativo.
+- Cálculos locales de derivadas, integrales y estadística; gráficos de derivadas y más funciones matemáticas. Las aproximaciones muestran su método y límites.
+- Las anotaciones, fórmulas y resultados se conservan al exportar HTML/PDF.
 
-Descarga **Tinta-Setup-1.6.0.exe**. Node.js y TeX no son necesarios. Ollama y sus modelos solo se descargan si eliges la IA. El instalador no tiene firma de código comercial.
+Descarga Tinta-Setup-1.7.0.exe o usa Preferencias → Actualizaciones en Tinta 1.6. El runtime está incluido y la IA continúa siendo opcional. El instalador conserva tus notas y no cambia la aplicación predeterminada para Markdown. No tiene firma digital comercial.
 
-Conserva notas existentes y crea una copia previa a 1.6. Cierra una versión portátil anterior antes de abrir la instalada. Recomendamos exportar una copia de tus notas.
-
-La revisión y la predicción pueden equivocarse. LaTeX es para notación matemática, no documentos completos. Los gráficos admiten funciones de una variable y puntos; no evalúan JavaScript.
+Las integrales y derivadas son aproximaciones numéricas, no cálculo simbólico. No se compilan documentos LaTeX completos. Las imágenes referidas a carpetas externas no se importan como adjuntos.

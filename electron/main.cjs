@@ -33,6 +33,16 @@ let closePending = false;
 let closeTimer = null;
 let rendererGone = false;
 let devUrl = null;
+const {markdownPaths,readMarkdownFiles}=require('./markdown-files.cjs');
+const openedBatches=[];
+let openingFiles=Promise.resolve();
+function enqueueFiles(paths){
+ if(!paths.length)return;
+ openingFiles=openingFiles.then(async()=>{
+  const batch=await readMarkdownFiles(paths);openedBatches.push(batch);
+  if(mainWindow&&!mainWindow.isDestroyed())mainWindow.webContents.send('tinta:files-opened');
+ }).catch(error=>{openedBatches.push({files:[],errors:[error.message]});if(mainWindow&&!mainWindow.isDestroyed())mainWindow.webContents.send('tinta:files-opened');});
+}
 
 if (process.env.TINTA_DEV_URL) {
   const candidate = new URL(process.env.TINTA_DEV_URL);
@@ -160,17 +170,11 @@ function registerIpc() {
     if (error) throw new Error(error);
     return true;
   });
+  handle('tinta:take-opened-files',()=>{const batches=openedBatches.splice(0);return {files:batches.flatMap(b=>b.files),errors:batches.flatMap(b=>b.errors)};});
   handle('tinta:import-files', async () => {
-    if (testMode) return [];
     const result = await dialog.showOpenDialog(mainWindow, { title: 'Importar notas Markdown', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Notas Markdown y texto', extensions: ['md', 'markdown', 'mdown', 'txt'] }] });
     if (result.canceled) return [];
-    const files = [];
-    for (const filePath of result.filePaths) {
-      const stat = await fsp.stat(filePath);
-      if (!stat.isFile() || stat.size > 16 * 1024 * 1024) throw new Error(`El archivo ${path.basename(filePath)} supera el límite de 16 MB.`);
-      files.push({ name: path.basename(filePath, path.extname(filePath)), body: (await fsp.readFile(filePath, 'utf8')).replace(/^\uFEFF/, '') });
-    }
-    return files;
+    return readMarkdownFiles(result.filePaths);
   });
   handle('tinta:export-note', async note => {
     if (!note || typeof note.title !== 'string' || typeof note.body !== 'string' || Buffer.byteLength(note.body) > MAX_BYTES) throw new Error('La nota no es válida.');
@@ -242,7 +246,9 @@ function createWindow() {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => { if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); } });
+  enqueueFiles(markdownPaths(process.argv.slice(app.isPackaged?1:2)));
+  app.on('open-file',(event,filePath)=>{event.preventDefault();enqueueFiles(markdownPaths([filePath]));});
+  app.on('second-instance', (_event,argv,cwd) => { enqueueFiles(markdownPaths(argv.slice(app.isPackaged?1:2),cwd)); if (mainWindow) { if (mainWindow.isMinimized()) mainWindow.restore(); mainWindow.show(); mainWindow.focus(); } });
   app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));

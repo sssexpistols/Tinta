@@ -1,4 +1,4 @@
-const functions={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,sqrt:Math.sqrt,abs:Math.abs,exp:Math.exp,log:Math.log,ln:Math.log,log10:Math.log10,floor:Math.floor,ceil:Math.ceil};
+const functions={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,sqrt:Math.sqrt,abs:Math.abs,exp:Math.exp,log:Math.log,ln:Math.log,log10:Math.log10,floor:Math.floor,ceil:Math.ceil,round:Math.round,sign:Math.sign,sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,asinh:Math.asinh,acosh:Math.acosh,atanh:Math.atanh,cbrt:Math.cbrt,log2:Math.log2};
 // Small expression grammar, never eval/Function or access to JS objects.
 export function compileExpression(source){
  if(typeof source!=='string'||source.length>300)throw new Error('La expresión admite hasta 300 caracteres.');
@@ -28,8 +28,9 @@ export function parsePlot(source){
  const range=(value,fallback)=>{const r=value||fallback;if(!Array.isArray(r)||r.length!==2||!r.every(Number.isFinite)||r[0]>=r[1]||r.some(x=>Math.abs(x)>1e9))throw new Error('El rango necesita dos números crecientes entre −1e9 y 1e9.');return r;};
  const points=spec.points||[];if(!Array.isArray(points)||points.length>500||points.some(p=>!Array.isArray(p)||p.length!==2||!p.every(v=>Number.isFinite(v)&&Math.abs(v)<=1e9)))throw new Error('Usa hasta 500 puntos [x, y] finitos.');
  const fit=spec.regression==='linear'?regression(points):null;
- const expressions=spec.functions||[];if(!Array.isArray(expressions)||expressions.length>6)throw new Error('Usa hasta seis funciones.');
+ const expressions=spec.functions||[];const derivatives=spec.derivatives||[];if(!Array.isArray(derivatives)||derivatives.length+expressions.length>6)throw new Error('Usa hasta seis funciones y derivadas en total.');if(!Array.isArray(expressions)||expressions.length>6)throw new Error('Usa hasta seis funciones.');
  const curves=expressions.map(expression=>({label:expression,fn:compileExpression(expression)}));
+ for(const expression of derivatives){const fn=compileExpression(expression);curves.push({label:`d/dx (${expression}) ≈`,fn:x=>{const h=1e-5*Math.max(1,Math.abs(x));return (fn(x+h)-fn(x-h))/(2*h);}});}
  if(fit)curves.push({label:`y = ${fit.slope.toPrecision(5)} x + ${fit.intercept.toPrecision(5)}`,fn:x=>fit.slope*x+fit.intercept});
  if(!curves.length&&!points.length)throw new Error('Añade functions o points al gráfico.');
  const bounds=axis=>{const values=points.map(p=>p[axis]);const min=Math.min(...values),max=Math.max(...values),pad=(max-min)*.15||1;return [min-pad,max+pad];};

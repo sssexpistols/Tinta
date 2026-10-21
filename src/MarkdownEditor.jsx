@@ -283,6 +283,16 @@ const MarkdownEditor = forwardRef(function MarkdownEditor({ noteId, noteTitle, v
       case 'rule': insert('\n\n---\n\n'); break
       case 'bold': wrap('**', '**', 'negrita'); break
       case 'italic': wrap('*', '*', 'cursiva'); break
+      case 'underline': wrap('<u>', '</u>', 'subrayado'); break
+      case 'highlight': wrap('==', '==', 'idea importante'); break
+      case 'superscript': wrap('<sup>', '</sup>', 'superíndice'); break
+      case 'subscript': wrap('<sub>', '</sub>', 'subíndice'); break
+      case 'footnote': {
+        const text=view.state.doc.toString();let index=1;while(text.includes('[^nota'+index+']'))index++;
+        const {from,to}=view.state.selection.main,label='[^nota'+index+']',selected=view.state.sliceDoc(from,to);
+        const changes=from===text.length?[{from,to,insert:selected+label+'\n\n'+label+': Fuente o explicación.'}]:[{from,to,insert:selected+label},{from:text.length,insert:'\n\n'+label+': Fuente o explicación.'}];
+        view.dispatch({changes,selection:{anchor:from+selected.length+label.length},scrollIntoView:true,userEvent:'input'});view.focus();break;
+      }
       case 'strike': wrap('~~', '~~', 'texto'); break
       case 'code': {
         const selected = view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to)

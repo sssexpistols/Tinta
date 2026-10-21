@@ -4,3 +4,4 @@ dist/
 .test-results/
 .test-installed/
 *.log
+.test-temp/
