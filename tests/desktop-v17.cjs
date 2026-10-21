@@ -65,6 +65,9 @@ const diagrams=[
  for(const b of bounds){assert.ok(b.contents.x>=b.box.x-1&&b.contents.y>=b.box.y-1&&b.contents.x+b.contents.width<=b.box.x+b.box.width+1&&b.contents.y+b.contents.height<=b.box.y+b.box.height+1,JSON.stringify(b));}
  assert.ok((await page.locator('.mermaid-diagram').nth(0).locator('tspan').count())>3);
  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(1000,780));
+ await page.getByLabel('Activar modo Vim',{exact:true}).click();await page.getByLabel('Vim NORMAL',{exact:true}).click();
+ const toolbarFits=await page.locator('.format-toolbar').evaluate(el=>{const box=el.getBoundingClientRect(),editor=document.querySelector('.markdown-editor').getBoundingClientRect();return [...el.querySelectorAll('button')].every(b=>{const r=b.getBoundingClientRect();return r.top>=box.top&&r.bottom<=box.bottom&&r.bottom<=editor.top;});});assert.ok(toolbarFits,'Wrapped toolbar controls must remain above the editor');
+
  await page.waitForTimeout(80);
  const clipped=await page.locator('.mermaid-diagram .diagram-viewport > svg').evaluateAll(svgs=>svgs.filter(svg=>{const b=svg.getBBox(),m=svg.getScreenCTM(),parent=svg.parentElement.getBoundingClientRect();const start=new DOMPoint(b.x,b.y).matrixTransform(m),end=new DOMPoint(b.x+b.width,b.y+b.height).matrixTransform(m);return start.x<parent.left-1||start.y<parent.top-1||end.x>parent.right+1||end.y>parent.bottom+1;}).length);assert.equal(clipped,0,'Drawn SVG contents fit the viewport at 100% on a narrow window');
  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(1500,940));

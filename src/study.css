@@ -11,5 +11,5 @@
 .study-resource{padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-editor)}
 .study-resource header{display:flex;justify-content:space-between;gap:12px;align-items:center}.study-resource small{display:block;color:var(--muted);margin-top:6px;line-height:1.6}
 .study-resource pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 Consolas,monospace;color:var(--syntax-punctuation);margin:10px 0 0;max-height:160px;overflow:auto}
-.format-toolbar{flex-wrap:wrap;min-height:36px;height:auto;row-gap:2px}.format-toolbar .editor-hint{white-space:nowrap}
+.format-toolbar .editor-hint{white-space:nowrap}
 .import-help{font-size:11px;color:var(--muted)}
