@@ -4,7 +4,7 @@ Un cuaderno local para Windows: Markdown, Vim, notas enlazadas, plantillas de es
 
 ## Instalar y actualizar
 
-Descarga **Tinta-Setup-1.6.0.exe** desde [Releases](https://github.com/sssexpistols/Tinta/releases). El instalador Windows x64 incluye el runtime: no necesitas Node.js, Python ni una distribución TeX.
+Descarga **Tinta-Setup-1.7.0.exe** desde [Releases](https://github.com/sssexpistols/Tinta/releases). El instalador Windows x64 incluye el runtime: no necesitas Node.js, Python ni una distribución TeX.
 
 La opción **Configurar la IA local al abrir Tinta** abre un asistente después de instalar. Puedes omitirla y usar **Preferencias → Instalar IA en este equipo** cuando quieras. Ollama y sus modelos se descargan por separado. La app propone Qwen2.5 1.5B, 3B o 7B según la RAM; la velocidad también depende de CPU, GPU y memoria libre. Los modelos requieren aproximadamente 1–5 GB adicionales y la primera carga puede tardar.
 
@@ -24,6 +24,23 @@ Se conserva el esquema de datos y se crea una copia previa `notes.before-v1.6.0.
 - Temas oscuro, claro y Gruvbox; Vim y números relativos opcionales. Atajos personalizables.
 - **Ctrl+N** nueva nota, **Ctrl+B** negrita, **Ctrl+I** cursiva, **Ctrl+S** guardar, **Ctrl+K** buscar y abrir; disponibles también en Vim insertar y visual.
 - `/` ofrece bloques de tabla, tarea, código, fórmula, gráfico y regresión, entre otros.
+
+## Abrir Markdown y tomar apuntes
+
+**Ctrl+O**, el menú **Abrir Markdown…** y arrastrar archivos sobre la app abren archivos .md, .markdown, .mdown y .txt. El instalador añade Tinta a **Abrir con** en Windows para Markdown sin cambiar tu aplicación predeterminada. También se reciben archivos cuando Tinta ya está abierta.
+
+Cada archivo se guarda como una **copia editable en la colección**. El original no se modifica ni se sincroniza; exporta Markdown desde el menú de la nota para llevar tus cambios a disco. Se admite UTF-8 y UTF-16 con BOM, hasta 16 MB por archivo y 50 archivos por selección. Las imágenes relativas a carpetas externas no se importan como adjuntos.
+
+- **Ctrl+U** subraya la selección con HTML `<u>texto</u>`.
+- **Ctrl+Shift+H** resalta con `==texto==`.
+- **Ctrl+Alt+N** inserta una nota al pie con su referencia editable.
+- **Ctrl+Alt+U / Ctrl+Alt+D** insertan superíndice/subíndice.
+- **Ctrl+Shift+M**, o el botón del libro, abre **Recursos para apuntes**: fórmulas, gráficos, cálculo, citas, glosario y preguntas de repaso.
+- Los atajos se pueden personalizar; los valores guardados tienen prioridad sobre los nuevos defaults.
+
+Los recuadros se escriben con `> [!NOTE] Título` y líneas citadas debajo. También funcionan TIP, IMPORTANT, WARNING, QUESTION, EXAMPLE, SUMMARY y QUOTE. Las referencias `[^fuente]` se vinculan con `[^fuente]: Autor y página`. La biblioteca incluye una respuesta plegable y plantillas de análisis literario y ensayo argumentativo.
+
+Las etiquetas de Mermaid usan la misma fuente al medir y al dibujar. Nodos y mensajes ajustan líneas según las capacidades del tipo de diagrama; las leyendas y títulos amplían el área SVG para no recortarse. Se conservan zoom, ampliación y PNG transparente.
 
 ## Corrección de escritura
 
@@ -82,3 +99,25 @@ Para preparar solo la carpeta ejecutable: `npm run build` y `npm run installer -
 El flujo usa el ejecutor estándar gratuito de Windows en este repositorio público. No guarda cachés ni artefactos de Actions: los binarios se adjuntan directamente a GitHub Releases. No utiliza Git LFS, Packages, ejecutores de pago ni servicios de IA de nube.
 
 Consulta [CHANGELOG.md](CHANGELOG.md), [VERIFICATION.md](VERIFICATION.md) y [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+
+## Cálculo local (1.7)
+
+Los bloques `calculate` muestran resultados numéricos y su método. Ejemplos:
+
+```calculate
+{"operation":"integral","expression":"x^2","from":0,"to":3}
+```
+
+```calculate
+{"operation":"derivative","expression":"sin(x)","at":0}
+```
+
+```calculate
+{"operation":"statistics","values":[2,4,4,6,9]}
+```
+
+Son aproximaciones numéricas, no álgebra simbólica. Simpson compuesto necesita continuidad y suavidad; la diferencia entre resoluciones no garantiza el error ni detecta todas las singularidades. Las derivadas usan diferencias centrales. La estadística incluye media, mediana, extremos y desviación estándar muestral.
+
+Un gráfico puede incluir `derivatives:["x^2"]` junto con `functions` (seis curvas en total, antes del ajuste de regresión). Se añaden sinh, cosh, tanh, asinh, acosh, atanh, cbrt, log2, round y sign. Las funciones trigonométricas usan radianes.
+
+La biblioteca ofrece matrices, sistemas, límites, integrales, sumatorias, probabilidad, vectores, física, química y cancelaciones. También se aceptan delimitadores LaTeX de bloque con barra invertida y corchetes.

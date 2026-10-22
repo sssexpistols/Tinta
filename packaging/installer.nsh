@@ -35,6 +35,15 @@ FunctionEnd
 !macroend
 
 !macro customInstall
+  ; Offer "Open with Tinta" without replacing the user's default Markdown app.
+  WriteRegStr HKCU "Software\Classes\Tinta.Markdown" "" "Documento Markdown"
+  WriteRegStr HKCU "Software\Classes\Tinta.Markdown\DefaultIcon" "" "$INSTDIR\Tinta.exe,0"
+  WriteRegStr HKCU "Software\Classes\Tinta.Markdown\shell\open\command" "" '"$INSTDIR\Tinta.exe" "%1"'
+  WriteRegStr HKCU "Software\Classes\Applications\Tinta.exe" "FriendlyAppName" "Tinta"
+  WriteRegStr HKCU "Software\Classes\Applications\Tinta.exe\shell\open\command" "" '"$INSTDIR\Tinta.exe" "%1"'
+  !insertmacro TintaRegisterExtension "md"
+  !insertmacro TintaRegisterExtension "markdown"
+  !insertmacro TintaRegisterExtension "mdown"
   ${If} $TintaAIChoice == ${BST_CHECKED}
     SetShellVarContext current
     CreateDirectory "$APPDATA\Tinta"
@@ -44,3 +53,20 @@ FunctionEnd
   ${EndIf}
 !macroend
 !endif
+
+!macro TintaRegisterExtension EXT
+  WriteRegStr HKCU "Software\Classes\Applications\Tinta.exe\SupportedTypes" ".${EXT}" ""
+  WriteRegBin HKCU "Software\Classes\.${EXT}\OpenWithProgids" "Tinta.Markdown" ""
+!macroend
+
+!macro customUnInstall
+  ; Only remove this installation's registration (another copy may own it).
+  ReadRegStr $0 HKCU "Software\Classes\Tinta.Markdown\shell\open\command" ""
+  ${If} $0 == '"$INSTDIR\Tinta.exe" "%1"'
+    DeleteRegKey HKCU "Software\Classes\Tinta.Markdown"
+    DeleteRegKey HKCU "Software\Classes\Applications\Tinta.exe"
+    DeleteRegValue HKCU "Software\Classes\.md\OpenWithProgids" "Tinta.Markdown"
+    DeleteRegValue HKCU "Software\Classes\.markdown\OpenWithProgids" "Tinta.Markdown"
+    DeleteRegValue HKCU "Software\Classes\.mdown\OpenWithProgids" "Tinta.Markdown"
+  ${EndIf}
+!macroend

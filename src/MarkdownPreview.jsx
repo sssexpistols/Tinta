@@ -9,6 +9,8 @@ import {highlightLines} from './highlightLines.js'
 import {renderDiagrams} from './diagrams.js'
 import {renderScience} from './science.js'
 import {installPreviewControls} from './previewControls.js'
+import {studyMarkdown} from './studyMarkdown.js'
+import './study.css'
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char])
@@ -21,6 +23,10 @@ export function renderMarkdown(value, notes) {
     breaks: true,
     renderer: {
       html({ text }) {
+        // Inline HTML arrives as separate opening/closing tokens. Sanitizing
+        // each half would prematurely close <u>, <sup>, etc. These exact,
+        // attribute-free tags are safe; the complete document is sanitized below.
+        if (/^<\/?(?:u|sub|sup|mark)>$/i.test(text)) return text
         // Only our renderers may attach interactive note/task metadata.
         return DOMPurify.sanitize(text, { ALLOW_DATA_ATTR: false, FORBID_ATTR: ['data-note-id', 'data-task-index', 'data-wiki-create'] })
       },
@@ -28,6 +34,7 @@ export function renderMarkdown(value, notes) {
         const {language,filename,title,line}=parseCodeInfo(lang)
         if(language.toLowerCase()==='mermaid')return `<pre class="mermaid-source">${escapeHTML(text)}</pre>`
         if(['math','latex','tex'].includes(language.toLowerCase()))return `<pre class="math-source">${escapeHTML(text)}</pre>`
+        if(language.toLowerCase()==='calculate')return `<pre class="calculate-source">${escapeHTML(text)}</pre>`
         if(language.toLowerCase()==='plot')return `<pre class="plot-source">${escapeHTML(text)}</pre>`
         let content = escapeHTML(text)
         if (language && hljs.getLanguage(language)) {
@@ -45,7 +52,7 @@ export function renderMarkdown(value, notes) {
         return `<a href="${escapeHTML(href)}"${title ? ` title="${escapeHTML(title)}"` : ''} rel="noopener noreferrer">${text}</a>`
       },
     },
-    extensions: [{name:'displayMath',level:'block',start(src){return src.indexOf('$$')},tokenizer(src){const m=/^\$\$[ \t]*\n?([\s\S]+?)\n?\$\$(?:\n|$)/.exec(src);if(m)return {type:'displayMath',raw:m[0],text:m[1]};},renderer(t){return `<pre class="math-source">${escapeHTML(t.text)}</pre>`;}},{name:'inlineMath',level:'inline',start(src){return src.search(/\$|\\\(/)},tokenizer(src){const m=/^\$(?!\s)([^$\n]*?\S)\$(?!\d)/.exec(src)||/^\\\(([\s\S]+?)\\\)/.exec(src);if(m)return {type:'inlineMath',raw:m[0],text:m[1]};},renderer(t){return `<span class="math-source">${escapeHTML(t.text)}</span>`;}},{
+    extensions: [{name:'displayMath',level:'block',start(src){return src.search(/\$\$|\\\[/)},tokenizer(src){const m=/^\$\$[ \t]*\n?([\s\S]+?)\n?\$\$(?:\n|$)/.exec(src)||/^\\\[([\s\S]+?)\\\](?:\n|$)/.exec(src);if(m)return {type:'displayMath',raw:m[0],text:m[1]};},renderer(t){return `<pre class="math-source">${escapeHTML(t.text)}</pre>`;}},{name:'inlineMath',level:'inline',start(src){return src.search(/\$|\\\(/)},tokenizer(src){const m=/^\$(?!\s)([^$\n]*?\S)\$(?!\d)/.exec(src)||/^\\\(([\s\S]+?)\\\)/.exec(src);if(m)return {type:'inlineMath',raw:m[0],text:m[1]};},renderer(t){return `<span class="math-source">${escapeHTML(t.text)}</span>`;}},{
       name: 'wikilink', level: 'inline',
       start(src) { return src.indexOf('[[') },
       tokenizer(src) {
@@ -63,7 +70,10 @@ export function renderMarkdown(value, notes) {
       },
     }],
   })
-  return DOMPurify.sanitize(markdown.parse(value || ''), {
+  const study = studyMarkdown(markdown)
+  markdown.use({extensions:study.extensions,renderer:study.renderer})
+  const rendered = markdown.parse(value || '')
+  return DOMPurify.sanitize(rendered + study.footnotes(), {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ['style', 'form', 'button', 'textarea', 'select', 'option', 'iframe', 'video', 'audio', 'object', 'embed'],
     FORBID_ATTR: ['style', 'srcset', 'formaction', 'action', 'autofocus'],
@@ -121,6 +131,11 @@ export default function MarkdownPreview({ value = '', notes = [], onNavigate, on
     }
     const href = anchor.getAttribute('href') || ''
     event.preventDefault()
+    if (/^#fn(?:ref)?-\d+(?:-\d+)?$/.test(href)) {
+      const target = containerRef.current?.querySelector(href)
+      target?.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'})
+      return
+    }
     if (/^https?:\/\//i.test(href)) window.open(href, '_blank', 'noopener,noreferrer')
   }
 

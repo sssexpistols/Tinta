@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.0
+
+- Corrige el recorte de etiquetas Mermaid usando la misma fuente durante el layout y al dibujar, activa el ajuste de líneas y amplía los límites SVG para incluir leyendas. El viewport respeta la relación de aspecto incluso en paneles estrechos. Los títulos largos de gráficos también se dividen en líneas.
+- Abre Markdown por Ctrl+O, arrastrar y soltar o «Abrir con Tinta» en Windows; conserva el original y guarda una copia en la colección. UTF-8/UTF-16, selección múltiple, límites de tamaño y errores por archivo.
+- Añade subrayado, resaltado, superíndice, subíndice, notas al pie, recuadros y respuestas plegables, con atajos configurables.
+- Biblioteca de recursos de matemáticas, ciencia y escritura, y plantillas de análisis literario y ensayo.
+- Derivadas e integrales numéricas, estadística descriptiva y curvas de derivadas; extensiones LaTeX para cancelaciones y símbolos en negrita.
+- Mantiene el esquema de notas, ajustes anteriores, IA opcional y actualización con guardado previo.
+
+
 ## 1.6.0
 
 - Prediction requires actual typing and suppresses suffix echoes after accepting a suggestion or moving the cursor.
