@@ -35,6 +35,8 @@ contextBridge.exposeInMainWorld('tinta', Object.freeze({
   load: () => ipcRenderer.invoke('tinta:load'),
   save: state => ipcRenderer.invoke('tinta:save', state),
   getStorageStatus: () => ipcRenderer.invoke('tinta:storage-status'),
+  takeOpenedFiles: () => ipcRenderer.invoke('tinta:take-opened-files'),
+  onFilesOpened: callback => { const listener=()=>callback();ipcRenderer.on('tinta:files-opened',listener);return ()=>ipcRenderer.removeListener('tinta:files-opened',listener); },
   importFiles: () => ipcRenderer.invoke('tinta:import-files'),
   aiConfig: () => ipcRenderer.invoke('tinta:ai-config'),
   aiModels: () => ipcRenderer.invoke('tinta:ai-models'),

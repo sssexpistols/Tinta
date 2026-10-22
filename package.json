@@ -1,8 +1,10 @@
 {
   "name": "tinta-notes",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
-  "overrides": { "@xmldom/xmldom": "0.9.12" },
+  "overrides": {
+    "@xmldom/xmldom": "0.9.12"
+  },
   "description": "Editor personal de notas Markdown para Windows",
   "type": "module",
   "main": "electron/main.cjs",
@@ -19,7 +21,8 @@
     "test:desktop:v14": "node tests/desktop-v14.cjs",
     "test:desktop:v15": "node tests/desktop-v15.cjs",
     "installer": "node scripts/installer.cjs",
-    "test:desktop:v16": "node tests/desktop-v16.cjs"
+    "test:desktop:v16": "node tests/desktop-v16.cjs",
+    "test:desktop:v17": "node tests/desktop-v17.cjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.0",

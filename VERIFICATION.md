@@ -1,40 +1,27 @@
-# Verificación 1.6.0
+# Verificación 1.7.0
 
-146 comprobaciones locales distintas aprobadas el 16 de octubre de 2026:
+## Pruebas locales
 
-| Suite | Casos |
-| --- | ---: |
-| Unitarias: almacenamiento, enlaces, contexto, gramática, gráficos, descarga y actualizaciones | 54 |
-| Escritorio base | 14 |
-| Vim, enlaces y compatibilidad | 12 |
-| Plantillas, exportación e IA simulada | 16 |
-| Biblioteca, menús, etiquetas, Mermaid y atajos | 16 |
-| Preview y atajos Markdown/Vim | 12 |
-| Plantillas, papelera y copia de recursos | 14 |
-| Escritura, ciencia y configuración opcional de IA | 8 |
+- 60 casos unitarios: almacenamiento y recuperación, contexto de IA, configuración opcional, enlaces, importación UTF-8/UTF-16, anotaciones, notas al pie, cálculo seguro y compatibilidad de atajos.
+- 92 casos de las suites de escritorio anteriores: editor, Vim, plantillas, papelera, exportación, IA simulada y ciencia.
+- 11 escenarios nuevos de escritorio: apertura al iniciar y con la app abierta, archivos arrastrados, Ctrl+O, formato/undo, notas al pie, biblioteca, cálculos, siete tipos Mermaid, copia PNG transparente y exportación HTML.
 
-La suite nueva reproduce aceptar una sugerencia, volver con Ctrl+Home, hacer clic al inicio y esperar sin escribir. No se hacen nuevas peticiones ni reaparece texto fantasma. También rechaza una respuesta que repite el texto posterior al cursor.
+Las pruebas usan TINTA_DATA_DIR aislados, nunca las notas del usuario. Los archivos Markdown de prueba se verifican sin modificaciones tras abrirlos.
 
-Se comprueban idioma inicial y selección bilingüe, offsets de corrección, exclusión de código/matemáticas, sintaxis LaTeX, mhchem, funciones seguras sin eval, regresión y R², zoom, exportación HTML y PNG con píxeles visibles y canal alfa transparente. La plantilla matemática no modifica plantillas personales.
+Los diagramas de flujo, secuencia, estado, clases, entidades, mapas mentales y pastel se prueban con texto largo. Se comparan los límites del contenido SVG con el viewBox y con un viewport estrecho, se comprueba ajuste de líneas y se inspecciona la captura ampliada. Los títulos largos de plot se comprueban dentro del SVG.
 
-La configuración opcional permite continuar sin descargar. Una descarga simulada completa activa el modelo; fallar o cancelar no lo activa. Las actualizaciones simuladas no instalan sin una descarga terminada y un guardado correcto. La prueba de disco lleno confirma que se conserva abierta la app.
+El cálculo numérico se contrasta con valores conocidos; entradas no finitas o código JavaScript se rechazan. Se preservan las advertencias sobre aproximaciones y se comprueba que el HTML exportado contiene fórmulas, anotaciones, referencias y resultados resueltos.
 
-## Empaquetado y CI
+## Instalador y publicación
 
-La suite 1.6 también pasó sus 8 casos sobre `win-unpacked/Tinta.exe`, usando un perfil aislado. El paquete incluye sus dependencias y funciona sin Node.js instalado por separado. Para esta comprobación local fue necesario dar lectura/ejecución del directorio generado al sandbox de aplicaciones de Windows; no se cambiaron los permisos de las notas.
+El workflow de Windows repite las suites desde el lockfile, construye NSIS y prueba las suites 1.6 y 1.7 sobre el ejecutable empaquetado y sobre la instalación silenciosa en un directorio aislado. Solo publica cuando todas las etapas pasan. El resultado de cada ejecución puede consultarse en https://github.com/sssexpistols/Tinta/actions.
 
-La [validación completa en GitHub Actions](https://github.com/sssexpistols/Tinta/actions/runs/38975040052) aprobó las 146 comprobaciones de origen, la compilación NSIS, los 8 casos del ejecutable empaquetado y los mismos 8 casos sobre la aplicación instalada en una carpeta aislada. La instalación silenciosa terminó correctamente y se verificó el ejecutable instalado antes de abrirlo.
-
-Vite compila correctamente. La carpeta Electron x64 se genera con sus dependencias de escritorio. En el entorno local el compilador NSIS no pudo iniciar; la compilación y la instalación se validaron en Windows de GitHub. El workflow repite las suites y exige que la aplicación instalada pase antes de publicar. Usa únicamente un runner estándar del repositorio público, sin cachés ni artefactos de Actions: los binarios se publican directamente en Releases. El resultado verificable de cada compilación está en [Actions](https://github.com/sssexpistols/Tinta/actions).
-
-`npm audit --omit=dev`: cero vulnerabilidades conocidas en dependencias de producción en la comprobación de esta entrega. Se actualizó el parser XML transitivo a 0.9.12. Vite advierte sobre el tamaño de algunos bundles; no impide compilar o arrancar.
+Se usa un runner estándar del repositorio público, sin cachés ni artefactos de Actions. La colección personal y la instalación existente no se usan en pruebas. La app se ofrece en Abrir con, sin sustituir la aplicación predeterminada del usuario.
 
 ## Límites
 
-- Perfiles de prueba con notas ficticias; nunca se prueba sobre la colección personal.
-- Ollama y las descargas se simulan para regresión. No se descargan modelos en la computadora del usuario durante las pruebas. La calidad y velocidad de un modelo real varían.
-- Se comprueban los datos enviados al portapapeles simulado, no el pegado en Word ni el formatter de un editor externo.
-- No existe todavía una actualización real entre dos releases públicas de Tinta; la primera release establece el canal. El guardado previo y los estados del actualizador están cubiertos con pruebas.
-- La instalación no cuenta con certificado comercial de firma de código.
-- Los procesos automatizados usan `--no-sandbox --disable-gpu`; el lanzamiento normal conserva el sandbox del renderer.
-- Vaciar papelera elimina las notas de la colección actual, no purga snapshots o backups históricos. Se mantiene el esquema 1.
+- El ajuste de líneas depende de las capacidades de cada tipo Mermaid. Para los tipos con leyendas de una línea se amplía el área dibujada para conservar el texto completo.
+- La apertura importa una copia; no sincroniza el archivo original ni importa sus imágenes relativas como adjuntos.
+- Cálculo numérico y notación LaTeX; no álgebra simbólica ni compilación de documentos TeX completos.
+- IA simulada en regresión; no se descargan modelos ni se envían notas a proveedores externos.
+- Instalador sin certificado comercial de firma de código.
